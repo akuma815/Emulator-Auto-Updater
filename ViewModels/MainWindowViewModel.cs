@@ -2383,18 +2383,52 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var installed = emulator.InstalledVersion?.Trim();
         var isRootUpToDate = IsUpToDate(installed, asset.Version);
 
-        var subfolderName = GetVersionSubfolderName(asset.Version, asset.PublishedAt);
+        var targetSubfolderName = GetVersionSubfolderName(asset.Version, asset.PublishedAt);
+        var foundSubfolderName = targetSubfolderName;
         var isSubfolderUpToDate = false;
 
-        if (!string.IsNullOrWhiteSpace(emulator.Folder))
+        if (!string.IsNullOrWhiteSpace(emulator.Folder) && Directory.Exists(emulator.Folder))
         {
             try
             {
-                var subfolderPath = Path.Combine(emulator.Folder, subfolderName);
-                if (Directory.Exists(subfolderPath))
+                // 1. Direct path check
+                var exactPath = Path.Combine(emulator.Folder, targetSubfolderName);
+                if (Directory.Exists(exactPath))
                 {
-                    var exeFiles = Directory.GetFiles(subfolderPath, "*.exe", SearchOption.TopDirectoryOnly);
-                    isSubfolderUpToDate = exeFiles.Length > 0;
+                    var exeFiles = Directory.GetFiles(exactPath, "*.exe", SearchOption.TopDirectoryOnly);
+                    if (exeFiles.Length > 0)
+                    {
+                        isSubfolderUpToDate = true;
+                        foundSubfolderName = targetSubfolderName;
+                    }
+                }
+
+                // 2. Flexible scanning if direct path did not match
+                if (!isSubfolderUpToDate)
+                {
+                    var subDirs = Directory.GetDirectories(emulator.Folder);
+                    foreach (var subDir in subDirs)
+                    {
+                        var dirName = Path.GetFileName(subDir);
+                        if (string.IsNullOrWhiteSpace(dirName)) continue;
+
+                        if (SubfolderManagerWindow.IsValidVersionSubfolder(subDir, dirName, asset.Version, emulator.Name))
+                        {
+                            if (dirName.Equals(asset.Version, StringComparison.OrdinalIgnoreCase) ||
+                                dirName.Equals($"v{asset.Version}", StringComparison.OrdinalIgnoreCase) ||
+                                dirName.Contains(asset.Version, StringComparison.OrdinalIgnoreCase) ||
+                                dirName.Equals(targetSubfolderName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var exeFiles = Directory.GetFiles(subDir, "*.exe", SearchOption.TopDirectoryOnly);
+                                if (exeFiles.Length > 0)
+                                {
+                                    isSubfolderUpToDate = true;
+                                    foundSubfolderName = dirName;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch
@@ -2409,9 +2443,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 IsUpToDate: true,
                 HasRootVersion: true,
                 HasSubfolderVersion: true,
-                SubfolderName: subfolderName,
+                SubfolderName: foundSubfolderName,
                 SummaryStatusText: "최신 (루트+하위폴더)",
-                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{subfolderName}')[✓ 최신]");
+                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{foundSubfolderName}')[✓ 최신]");
         }
 
         if (isSubfolderUpToDate)
@@ -2420,9 +2454,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 IsUpToDate: true,
                 HasRootVersion: false,
                 HasSubfolderVersion: true,
-                SubfolderName: subfolderName,
-                SummaryStatusText: $"최신 (하위폴더: {subfolderName})",
-                DetailedLogText: $"루트 폴더[미업데이트] & 하위 폴더('{subfolderName}')[✓ 최신 감지]");
+                SubfolderName: foundSubfolderName,
+                SummaryStatusText: $"최신 (하위폴더: {foundSubfolderName})",
+                DetailedLogText: $"루트 폴더[미업데이트] & 하위 폴더('{foundSubfolderName}')[✓ 최신 감지]");
         }
 
         if (isRootUpToDate)
@@ -2431,18 +2465,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 IsUpToDate: true,
                 HasRootVersion: true,
                 HasSubfolderVersion: false,
-                SubfolderName: subfolderName,
+                SubfolderName: targetSubfolderName,
                 SummaryStatusText: "최신 (루트폴더)",
-                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{subfolderName}')[미존재]");
+                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{targetSubfolderName}')[미존재]");
         }
 
         return new DualFolderStatusResult(
             IsUpToDate: false,
             HasRootVersion: false,
             HasSubfolderVersion: false,
-            SubfolderName: subfolderName,
+            SubfolderName: targetSubfolderName,
             SummaryStatusText: $"업데이트 가능 ({asset.Version})",
-            DetailedLogText: $"루트 폴더[업데이트 필요] & 하위 폴더('{subfolderName}')[미존재]");
+            DetailedLogText: $"루트 폴더[업데이트 필요] & 하위 폴더('{targetSubfolderName}')[미존재]");
     }
 
     private async Task ExecuteBusyOperationAsync(Func<Task> operation, string busyMessage)
