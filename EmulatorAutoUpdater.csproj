@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>EmulatorAutoUpdater</AssemblyName>
+    <RootNamespace>EmulatorAutoUpdater</RootNamespace>
+    <ApplicationIcon>Assets\EmulatorAutoUpdater.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="tempSharpInspect\**\*.cs" />
+    <Compile Remove="tmp\**\*.cs" />
+    <Compile Remove="EmulatorAutoUpdater.Tests\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.49.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\EmulatorAutoUpdater.ico" />
+    <Resource Include="Assets\EmulatorAutoUpdater.png" />
+    <Resource Include="Assets\jpn0.pgf" />
+  </ItemGroup>
+
+  <Target Name="CopyDocsAfterPublish" AfterTargets="Publish">
+    <Copy SourceFiles="README.md;USER_GUIDE.md" DestinationFolder="G:\Downloads\Emulator Auto Updater" SkipUnchangedFiles="true" ContinueOnError="true" />
+  </Target>
+</Project>

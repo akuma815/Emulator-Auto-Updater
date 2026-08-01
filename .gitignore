@@ -1,0 +1,18 @@
+bin/
+obj/
+.vs/
+*.log
+
+# Temp/debug artifacts
+tmp/
+tempSharpInspect/
+inspect.ps1
+preprocessed.xml
+dolphin_api.json
+dolphin_response.html
+tmp_dolphin_proxy.txt
+shield-challenge.js
+shield-worker.js
+ppsspp_devbuilds.html
+ppsspp_main.js
+ppsspp_history20.json

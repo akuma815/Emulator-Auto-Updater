@@ -1,0 +1,105 @@
+<Window x:Class="EmulatorAutoUpdater.SubfolderManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="버전 하위 폴더 관리"
+        Height="540" Width="720"
+        MinHeight="450" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#F8FAFC"
+        Icon="pack://application:,,,/Assets/EmulatorAutoUpdater.ico">
+
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <!-- 1. Header Card -->
+            <RowDefinition Height="Auto" />
+            <!-- 2. Controls Toolbar -->
+            <RowDefinition Height="Auto" />
+            <!-- 3. Subfolder DataGrid -->
+            <RowDefinition Height="*" />
+            <!-- 4. Footer Actions -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Card -->
+        <Border Grid.Row="0" Style="{StaticResource CardPanelStyle}" Padding="14,12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#EFF6FF" Margin="0,0,12,0">
+                    <TextBlock Text="📁" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleTextBlock" Text="에뮬레이터 하위 저장 폴더 관리" FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" />
+                    <TextBlock x:Name="PathTextBlock" Text="루트 경로: C:\Emulators" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. Controls Toolbar -->
+        <Border Grid.Row="1" Style="{StaticResource CardPanelStyle}" Padding="12,8" Margin="0,0,0,10">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Button Content="전체 선택" Click="SelectAll_Click" MinWidth="80" Margin="0,0,6,0" Style="{StaticResource SecondaryButtonStyle}" />
+                    <Button Content="전체 해제" Click="DeselectAll_Click" MinWidth="80" Margin="0,0,12,0" Style="{StaticResource SecondaryButtonStyle}" />
+                    <Button Content="새로고침" Click="Refresh_Click" MinWidth="80" Style="{StaticResource SecondaryButtonStyle}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock x:Name="SelectionSummaryTextBlock" Text="선택됨: 0개 폴더 (0 MB)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 3. Subfolder DataGrid -->
+        <Border Grid.Row="2" Style="{StaticResource CardPanelStyle}" Padding="0" Margin="0,0,0,12">
+            <DataGrid x:Name="SubfolderDataGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#E2E8F0"
+                      Background="Transparent"
+                      RowHeaderWidth="0">
+                <DataGrid.Columns>
+                    <!-- CheckBox Column -->
+                    <DataGridTemplateColumn Width="45" CanUserResize="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Folder Name -->
+                    <DataGridTextColumn Header="폴더명 (버전 / 날짜)" Binding="{Binding FolderName}" Width="1.8*" IsReadOnly="True" />
+
+                    <!-- Executable File -->
+                    <DataGridTextColumn Header="실행 파일 (.exe)" Binding="{Binding ExecutableName}" Width="1.3*" IsReadOnly="True" />
+
+                    <!-- Size -->
+                    <DataGridTextColumn Header="용량" Binding="{Binding FormattedSize}" Width="1*" IsReadOnly="True" />
+
+                    <!-- Last Modified Date -->
+                    <DataGridTextColumn Header="생성/수정 일시" Binding="{Binding FormattedDate}" Width="1.4*" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- 4. Footer Actions -->
+        <Grid Grid.Row="3">
+            <TextBlock x:Name="StatusMessageTextBlock" Text="삭제할 폴더를 선택한 후 [선택한 폴더 삭제] 버튼을 누르세요." FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+            
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button x:Name="DeleteSelectedButton" Content="🗑️ 선택한 폴더 삭제" Click="DeleteSelected_Click" Style="{StaticResource DangerButtonStyle}" MinWidth="150" Height="34" Margin="0,0,8,0" />
+                <Button Content="닫기" Click="Close_Click" Style="{StaticResource SecondaryButtonStyle}" MinWidth="80" Height="34" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
