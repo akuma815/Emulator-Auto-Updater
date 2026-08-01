@@ -225,7 +225,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 SelectedReleaseVersion = string.Empty;
                 ReleaseNotes = string.Empty;
                 RestoreUpdateHistory(value);
-                StatusMessage = value == null ? "에뮬레이터를 선택하세요." : $"'{value.Name}' 항목을 선택했습니다.";
+                RestoreTransferState(value);
                 UpdateCommandStates();
             }
         }
@@ -1499,7 +1499,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             SelectedEmulator.LastDownloadedAt = DateTimeOffset.Now;
             SelectedEmulator.InstalledVersion = assetToDownload.Version;
-            SelectedEmulator.StatusText = "최신 버전";
+            var dualStatusOnly = EvaluateDualFolderStatus(SelectedEmulator, assetToDownload);
+            SelectedEmulator.StatusText = dualStatusOnly.SummaryStatusText;
             SelectedEmulator.StatusType = "UpToDate";
             await SaveSettingsToDiskAsync();
 
@@ -1548,7 +1549,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 {
                     File.Delete(downloadedFile);
                     SelectedEmulator.InstalledVersion = assetToDownload.Version;
-                    SelectedEmulator.StatusText = "최신 버전";
+                    var dualStatusExtracted = EvaluateDualFolderStatus(SelectedEmulator, assetToDownload);
+                    SelectedEmulator.StatusText = dualStatusExtracted.SummaryStatusText;
                     SelectedEmulator.StatusType = "UpToDate";
                     await SaveSettingsToDiskAsync();
                     Progress = 100;
@@ -1557,7 +1559,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 }
 
                 SelectedEmulator.InstalledVersion = assetToDownload.Version;
-                SelectedEmulator.StatusText = "최신 버전";
+                var dualStatusNormal = EvaluateDualFolderStatus(SelectedEmulator, assetToDownload);
+                SelectedEmulator.StatusText = dualStatusNormal.SummaryStatusText;
                 SelectedEmulator.StatusType = "UpToDate";
                 await SaveSettingsToDiskAsync();
                 Progress = 100;
@@ -2622,6 +2625,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             SelectedAsset = ReleaseAssets.FirstOrDefault();
             SelectedReleaseVersion = history.ReleaseVersion;
             ReleaseNotes = history.ReleaseNotes;
+        });
+    }
+
+    private void RestoreTransferState(EmulatorConfig? emulator)
+    {
+        RunOnUIThread(() =>
+        {
+            if (emulator != null && _transferStates.TryGetValue(emulator.Id, out var state))
+            {
+                StatusMessage = string.IsNullOrWhiteSpace(state.Status)
+                    ? $"'{emulator.Name}' 항목을 선택했습니다."
+                    : state.Status;
+                Progress = state.Progress;
+            }
+            else if (emulator != null)
+            {
+                StatusMessage = $"'{emulator.Name}' 항목을 선택했습니다.";
+                Progress = 0;
+            }
+            else
+            {
+                StatusMessage = "에뮬레이터를 선택하세요.";
+                Progress = 0;
+            }
         });
     }
 
