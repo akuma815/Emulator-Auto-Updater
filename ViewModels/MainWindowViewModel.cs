@@ -961,7 +961,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                                 }
 
                                 emulator.InstalledVersion = asset.Version;
-                                emulator.StatusText = "최신 버전";
+                                var dualStatusBatch = EvaluateDualFolderStatus(emulator, asset);
+                                emulator.StatusText = dualStatusBatch.SummaryStatusText;
                                 emulator.StatusType = "UpToDate";
                                 await SaveSettingsToDiskAsync();
 
