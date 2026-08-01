@@ -1079,7 +1079,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             emulator.LastDownloadedAt = DateTimeOffset.Now;
             emulator.InstalledVersion = asset.Version;
-            emulator.StatusText = "최신 버전";
+            var dualStatusOnly = EvaluateDualFolderStatus(emulator, asset);
+            emulator.StatusText = dualStatusOnly.SummaryStatusText;
             emulator.StatusType = "UpToDate";
             await SaveSettingsToDiskAsync();
             ReportTransfer(emulator, $"다운로드 완료: {downloadedFile}", 100);
@@ -1135,7 +1136,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             emulator.InstalledVersion = asset.Version;
-            emulator.StatusText = "최신 버전";
+            var dualStatus = EvaluateDualFolderStatus(emulator, asset);
+            emulator.StatusText = dualStatus.SummaryStatusText;
             emulator.StatusType = "UpToDate";
             await SaveSettingsToDiskAsync();
             ReportTransfer(
