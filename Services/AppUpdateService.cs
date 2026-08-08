@@ -151,10 +151,10 @@ start """" ""{currentExePath.Replace("'", "''")}""
 timeout /t 2 /nobreak > NUL
 if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
 echo [%date% %time%] Update complete! >> %LOGFILE%
-exit
+exit /b 0
 ";
 
-        File.WriteAllText(batPath, script, System.Text.Encoding.UTF8);
+        File.WriteAllText(batPath, script, new System.Text.UTF8Encoding(false));
         return batPath;
     }
 }
