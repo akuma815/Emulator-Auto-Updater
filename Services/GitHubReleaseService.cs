@@ -153,7 +153,7 @@ public sealed class GitHubReleaseService
 
         if (!dateMatch.Success)
         {
-            return DateTimeOffset.UtcNow;
+            return DateTimeOffset.MinValue;
         }
 
         var normalizedDate = Regex.Replace(
@@ -168,7 +168,7 @@ public sealed class GitHubReleaseService
             DateTimeStyles.AssumeUniversal,
             out var publishedAt)
             ? publishedAt
-            : DateTimeOffset.UtcNow;
+            : DateTimeOffset.MinValue;
     }
 
     private static bool IsFlycastBuildsUrl(string repository)
@@ -338,7 +338,7 @@ public sealed class GitHubReleaseService
             return publishedAt;
         }
 
-        return DateTimeOffset.UtcNow;
+        return DateTimeOffset.MinValue;
     }
 
     private async Task<string?> GetDolphinDownloadPageHtmlAsync(
@@ -458,7 +458,7 @@ public sealed class GitHubReleaseService
             TagName = latestAsset.Name,
             Name = latestAsset.Name,
             Body = string.Empty,
-            PublishedAt = DateTimeOffset.UtcNow,
+            PublishedAt = ParseHtmlPublishedDate(html),
             Assets = assets.ToList()
         };
     }
@@ -478,7 +478,7 @@ public sealed class GitHubReleaseService
         var history = await JsonSerializer.DeserializeAsync<List<PpssppHistoryEntry>>(stream, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
-        }, cancellationToken);
+        });
 
         if (history == null || history.Count == 0)
         {
@@ -542,12 +542,12 @@ public sealed class GitHubReleaseService
     {
         if (string.IsNullOrWhiteSpace(date))
         {
-            return DateTimeOffset.UtcNow;
+            return DateTimeOffset.MinValue;
         }
 
         return DateTimeOffset.TryParse(date, out var parsed)
             ? parsed
-            : DateTimeOffset.UtcNow;
+            : DateTimeOffset.MinValue;
     }
 
     private sealed record PpssppHistoryEntry(
@@ -598,8 +598,7 @@ public sealed class GitHubReleaseService
         }
 
         var publishedAt = response.Content.Headers.LastModified ??
-                          response.Headers.Date ??
-                          DateTimeOffset.UtcNow;
+                          DateTimeOffset.MinValue;
 
         if (repositoryUrl.StartsWith("https://nightly.link", StringComparison.OrdinalIgnoreCase))
         {
@@ -876,7 +875,7 @@ public sealed class GitHubReleaseService
             TagName = latestVersion,
             Name = $"Dolphin Development {latestVersion}",
             Body = masterBuild.Description ?? "Dolphin Development Build",
-            PublishedAt = masterBuild.TimeCreated != default ? masterBuild.TimeCreated : DateTimeOffset.UtcNow,
+            PublishedAt = masterBuild.TimeCreated != default ? masterBuild.TimeCreated : DateTimeOffset.MinValue,
             Assets = assets
         };
     }
@@ -1168,7 +1167,7 @@ public sealed class GitHubReleaseService
         {
             return publishedAt > DateTimeOffset.MinValue
                 ? publishedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                : DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+                : string.Empty;
         }
 
         return cleanRaw;
@@ -1427,12 +1426,13 @@ public sealed class GitHubReleaseService
 
                     if (isMatched)
                     {
+                        var parsedDate = ParseHtmlPublishedDate(html);
                         return new GitHubRelease
                         {
                             TagName = tagName,
                             Name = $"Release {tagName}",
                             Body = $"GitHub Release {tagName} (웹 파싱 - latest 리다이렉트).",
-                            PublishedAt = DateTimeOffset.UtcNow,
+                            PublishedAt = parsedDate,
                             FetchSource = "웹 파싱 (latest 리다이렉트)",
                             Assets = assets
                         };
@@ -1479,6 +1479,8 @@ public sealed class GitHubReleaseService
                 try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
             }
 
+            var pagePublishedDate = ParseHtmlPublishedDate(html);
+
             foreach (Match m in tagMatches)
             {
                 var tagName = WebUtility.HtmlDecode(m.Groups["tag"].Value);
@@ -1490,7 +1492,7 @@ public sealed class GitHubReleaseService
                     TagName = tagName,
                     Name = $"Release {tagName}",
                     Body = $"GitHub Release {tagName} (웹 파싱 - 태그 순회).",
-                    PublishedAt = DateTimeOffset.UtcNow,
+                    PublishedAt = pagePublishedDate,
                     FetchSource = "웹 파싱 (태그 순회)",
                     Assets = assets
                 };
@@ -1513,6 +1515,22 @@ public sealed class GitHubReleaseService
         {
             return null;
         }
+    }
+
+    private static DateTimeOffset ParseHtmlPublishedDate(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return DateTimeOffset.MinValue;
+        }
+
+        var match = Regex.Match(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
+        if (match.Success && DateTimeOffset.TryParse(match.Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dto))
+        {
+            return dto;
+        }
+
+        return DateTimeOffset.MinValue;
     }
 
     private async Task<List<GitHubAsset>> FetchExpandedAssetsForTagAsync(string owner, string repo, string tagName, string htmlPage, CancellationToken cancellationToken)
@@ -1594,7 +1612,10 @@ public sealed class GitHubReleaseService
         var body = root.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() ?? string.Empty :
                    root.TryGetProperty("description", out var descProp) ? descProp.GetString() ?? string.Empty : string.Empty;
         var publishedAt = root.TryGetProperty("published_at", out var publishedAtProp) && publishedAtProp.ValueKind == JsonValueKind.String
-            ? DateTimeOffset.Parse(publishedAtProp.GetString()!) : DateTimeOffset.UtcNow;
+            ? DateTimeOffset.Parse(publishedAtProp.GetString()!)
+            : (root.TryGetProperty("created_at", out var createdAtProp) && createdAtProp.ValueKind == JsonValueKind.String
+                ? DateTimeOffset.Parse(createdAtProp.GetString()!)
+                : DateTimeOffset.MinValue);
 
         var assets = new List<GitHubAsset>();
         if (root.TryGetProperty("assets", out var assetsElement) && assetsElement.ValueKind == JsonValueKind.Array)
