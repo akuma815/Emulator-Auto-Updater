@@ -2563,26 +2563,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        // 3. Substring matching (e.g. "pcsx2-v2.6.3-windows-x64-Qt" vs "2.6.3")
-        if (!string.IsNullOrWhiteSpace(latestClean) &&
-            (instClean.Contains(latestClean, StringComparison.OrdinalIgnoreCase) ||
-             latestClean.Contains(instClean, StringComparison.OrdinalIgnoreCase)))
-        {
-            return true;
-        }
-
-        // 4. System.Version comparison
+        // 3. System.Version comparison (e.g. 2.6.3.0 vs 2.6.3)
         if (System.Version.TryParse(instClean, out var vInst) &&
             System.Version.TryParse(latestClean, out var vLatest))
         {
             return vLatest <= vInst;
         }
 
-        // 5. DateTimeOffset / Date comparison
+        // 4. DateTimeOffset / Date comparison (same-day or 24h tolerance for web-parsed nightlies)
         if (DateTimeOffset.TryParse(inst, out var instDate) &&
             DateTimeOffset.TryParse(latest, out var latestDate))
         {
-            return latestDate <= instDate || Math.Abs((latestDate - instDate).TotalMinutes) <= 5;
+            return latestDate <= instDate || instDate.Date == latestDate.Date || Math.Abs((latestDate - instDate).TotalHours) <= 24;
+        }
+
+        // 5. Token/Substring matching (for named builds)
+        if (instClean.Length >= 3 && latestClean.Length >= 3 &&
+            !char.IsDigit(instClean[0]) && !char.IsDigit(latestClean[0]))
+        {
+            if (instClean.Equals(latestClean, StringComparison.OrdinalIgnoreCase) ||
+                instClean.Contains(latestClean, StringComparison.OrdinalIgnoreCase) ||
+                latestClean.Contains(instClean, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
         }
 
         return false;
@@ -2599,6 +2603,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private DualFolderStatusResult EvaluateDualFolderStatus(EmulatorConfig emulator, BuildAsset asset)
     {
         var installed = emulator.InstalledVersion?.Trim();
+
+        // If InstalledVersion is missing, but root folder exists and contains .exe files and UseVersionSubfolders is false:
+        if (string.IsNullOrWhiteSpace(installed) && !UseVersionSubfolders)
+        {
+            if (!string.IsNullOrWhiteSpace(emulator.Folder) && Directory.Exists(emulator.Folder))
+            {
+                var rootExeFiles = Directory.GetFiles(emulator.Folder, "*.exe", SearchOption.TopDirectoryOnly);
+                if (rootExeFiles.Length > 0)
+                {
+                    emulator.InstalledVersion = asset.Version;
+                    installed = asset.Version;
+                }
+            }
+        }
+
         var isRootUpToDate = IsUpToDate(installed, asset.Version);
 
         var targetSubfolderName = GetVersionSubfolderName(asset.Version, asset.PublishedAt);
