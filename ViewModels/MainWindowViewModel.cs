@@ -1404,6 +1404,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void ReportTransferQuiet(EmulatorConfig emulator, int progress)
     {
+        bool isSelected;
         lock (_transferStates)
         {
             if (!_transferStates.TryGetValue(emulator.Id, out var state))
@@ -1413,11 +1414,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             state.Progress = progress;
+            isSelected = ReferenceEquals(SelectedEmulator, emulator);
+        }
 
-            if (ReferenceEquals(SelectedEmulator, emulator))
-            {
-                RunOnUIThread(() => Progress = progress);
-            }
+        if (isSelected)
+        {
+            RunOnUIThread(() => Progress = progress);
         }
     }
 
@@ -1472,6 +1474,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void ReportTransfer(EmulatorConfig emulator, string? status, int? progress)
     {
+        bool isSelected;
         lock (_transferStates)
         {
             if (!_transferStates.TryGetValue(emulator.Id, out var state))
@@ -1490,14 +1493,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 state.Progress = progress.Value;
             }
 
-            if (ReferenceEquals(SelectedEmulator, emulator))
+            isSelected = ReferenceEquals(SelectedEmulator, emulator);
+        }
+
+        if (isSelected)
+        {
+            RunOnUIThread(() =>
             {
-                RunOnUIThread(() =>
-                {
-                    if (status != null) StatusMessage = status;
-                    if (progress.HasValue) Progress = progress.Value;
-                });
-            }
+                if (status != null) StatusMessage = status;
+                if (progress.HasValue) Progress = progress.Value;
+            });
         }
     }
 
@@ -2257,6 +2262,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _customConfigFilePath = targetFilePath;
         }
 
+        List<EmulatorConfig> emulatorSnapshot = [];
+        List<double> columnWidthsSnapshot = [];
+        RunOnUIThread(() =>
+        {
+            emulatorSnapshot = Emulators.ToList();
+            columnWidthsSnapshot = EmulatorGridColumnWidths.ToList();
+        });
+
         await _settingsWriteLock.WaitAsync();
         try
         {
@@ -2270,8 +2283,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 UseVersionSubfolders = UseVersionSubfolders,
                 DefaultAssetPattern = DefaultAssetPattern,
                 WindowPlacement = WindowPlacement,
-                EmulatorGridColumnWidths = EmulatorGridColumnWidths.ToList(),
-                Emulators = Emulators.ToList()
+                EmulatorGridColumnWidths = columnWidthsSnapshot,
+                Emulators = emulatorSnapshot
             };
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
@@ -2281,7 +2294,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             await File.WriteAllTextAsync(temporaryPath, json);
             File.Move(temporaryPath, path, overwrite: true);
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
+            RunOnUIThread(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath))));
         }
         finally
         {
@@ -2696,7 +2709,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
             else
             {
-                dispatcher.Invoke(action);
+                dispatcher.BeginInvoke(action);
             }
         }
         else
