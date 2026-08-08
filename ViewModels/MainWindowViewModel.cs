@@ -2411,7 +2411,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private static bool IsUpToDate(string? installed, string latestVersion)
     {
-        if (string.IsNullOrWhiteSpace(installed))
+        if (string.IsNullOrWhiteSpace(installed) || string.IsNullOrWhiteSpace(latestVersion))
         {
             return false;
         }
@@ -2419,15 +2419,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var inst = installed.Trim();
         var latest = latestVersion.Trim();
 
+        // 1. Exact match
         if (string.Equals(inst, latest, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
+        // 2. Normalized 'v' prefix comparison
+        var instClean = inst.TrimStart('v', 'V').Trim();
+        var latestClean = latest.TrimStart('v', 'V').Trim();
+
+        if (string.Equals(instClean, latestClean, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // 3. Substring matching (e.g. "pcsx2-v2.6.3-windows-x64-Qt" vs "2.6.3")
+        if (!string.IsNullOrWhiteSpace(latestClean) &&
+            (instClean.Contains(latestClean, StringComparison.OrdinalIgnoreCase) ||
+             latestClean.Contains(instClean, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        // 4. System.Version comparison
+        if (System.Version.TryParse(instClean, out var vInst) &&
+            System.Version.TryParse(latestClean, out var vLatest))
+        {
+            return vLatest <= vInst;
+        }
+
+        // 5. DateTimeOffset / Date comparison
         if (DateTimeOffset.TryParse(inst, out var instDate) &&
             DateTimeOffset.TryParse(latest, out var latestDate))
         {
-            return latestDate <= instDate;
+            return latestDate <= instDate || Math.Abs((latestDate - instDate).TotalMinutes) <= 5;
         }
 
         return false;
