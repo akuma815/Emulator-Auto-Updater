@@ -37,8 +37,12 @@ public static class AssetPatternHelper
             baseName = trimmed[..^extMatch.Value.Length];
         }
 
-        // Tokenize baseName into words and non-word delimiters
-        var matches = Regex.Matches(baseName, @"[a-zA-Z0-9]+|[^a-zA-Z0-9]+");
+        // Pre-normalize compound architecture words (e.g. x86_64, x86-64)
+        baseName = Regex.Replace(baseName, @"(?i)\bx86[-_]64\b", "x86_64");
+        baseName = Regex.Replace(baseName, @"(?i)\bx86[-_]32\b", "x86_32");
+
+        // Tokenize baseName into words (including _) and non-word delimiters
+        var matches = Regex.Matches(baseName, @"[a-zA-Z0-9_]+|[^a-zA-Z0-9_]+");
 
         var patternBuilder = new StringBuilder();
         patternBuilder.Append("(?i)");
@@ -51,8 +55,8 @@ public static class AssetPatternHelper
         {
             var token = match.Value;
 
-            // Skip delimiters (hyphens, underscores, dots, spaces)
-            if (!Regex.IsMatch(token, @"[a-zA-Z0-9]"))
+            // Skip delimiters (hyphens, dots, spaces, etc.)
+            if (!Regex.IsMatch(token, @"[a-zA-Z0-9_]"))
             {
                 continue;
             }
@@ -89,11 +93,21 @@ public static class AssetPatternHelper
             }
 
             // Detect Arch keywords
-            if (Regex.IsMatch(token, @"^(x64|amd64|x86_64|64bit|64)$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(token, @"^(x64|amd64|x86_64|x86-64|64bit|64)$", RegexOptions.IgnoreCase))
             {
                 if (!addedArch)
                 {
-                    patternBuilder.Append(".*(x64|amd64|64)");
+                    patternBuilder.Append(".*(x64|amd64|x86_64|64)");
+                    addedArch = true;
+                }
+                continue;
+            }
+
+            if (Regex.IsMatch(token, @"^(x86|x86_32|x86-32|32bit|32)$", RegexOptions.IgnoreCase))
+            {
+                if (!addedArch)
+                {
+                    patternBuilder.Append(".*(x86|32)");
                     addedArch = true;
                 }
                 continue;
@@ -125,7 +139,14 @@ public static class AssetPatternHelper
             // Structural application name token
             if (!hasAppTitle)
             {
-                patternBuilder.Append(Regex.Escape(token));
+                if (addedOs || addedArch)
+                {
+                    patternBuilder.Append(".*" + Regex.Escape(token));
+                }
+                else
+                {
+                    patternBuilder.Append(Regex.Escape(token));
+                }
                 hasAppTitle = true;
             }
             else

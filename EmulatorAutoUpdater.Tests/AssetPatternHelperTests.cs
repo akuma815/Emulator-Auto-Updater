@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Xunit;
 using EmulatorAutoUpdater.Models;
 using EmulatorAutoUpdater.Services;
@@ -9,13 +10,18 @@ namespace EmulatorAutoUpdater.Tests;
 public class AssetPatternHelperTests
 {
     [Theory]
-    [InlineData("PPSSPPWindows64_v1.18.0.zip", "(?i)PPSSPPWindows64.*\\.(zip|7z)$")]
-    [InlineData("Eden-Windows-0133caf702-amd64-clang-pgo.zip", "(?i)Eden.*(win|windows).*(x64|amd64|64).*\\.(zip|7z)$")]
-    [InlineData("dolphin-master-5.0-21430-x64.7z", "(?i)dolphin.*(x64|amd64|64).*\\.(zip|7z)$")]
+    [InlineData("windows-x86_64.zip", "(?i).*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
+    [InlineData("duckstation-windows-x86_64-release.zip", "(?i)duckstation.*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
+    [InlineData("Eden-Windows-0133caf702-amd64-clang-pgo.zip", "(?i)Eden.*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
+    [InlineData("dolphin-master-5.0-21430-x64.7z", "(?i)dolphin.*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
     public void ConvertFilenameToAssetPattern_ShouldGenerateExpectedRegex(string input, string expectedPattern)
     {
         var result = AssetPatternHelper.ConvertFilenameToAssetPattern(input);
         Assert.Equal(expectedPattern, result);
+
+        // Verify that the generated regex pattern actually matches the original input filename!
+        var isMatched = Regex.IsMatch(input, result, RegexOptions.IgnoreCase);
+        Assert.True(isMatched, $"Generated pattern '{result}' failed to match original input filename '{input}'");
     }
 
     [Fact]
