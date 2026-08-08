@@ -117,6 +117,8 @@ if %ERRORLEVEL%==0 (
     goto wait_loop
 )
 
+timeout /t 2 /nobreak > NUL
+
 echo [Self-Updater] Extracting update files to staging area...
 if exist ""{extractStageDir.Replace("'", "''")}"" rmdir /s /q ""{extractStageDir.Replace("'", "''")}""
 powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -Path '{zipFilePath.Replace("'", "''")}' -DestinationPath '{extractStageDir.Replace("'", "''")}' -Force""
@@ -125,11 +127,18 @@ if exist ""{appDirectory.Replace("'", "''")}\config.json"" (
     if exist ""{extractStageDir.Replace("'", "''")}\config.json"" del /f /q ""{extractStageDir.Replace("'", "''")}\config.json"" 2>NUL
 )
 
-echo [Self-Updater] Overwriting application binaries in '{appDirectory}'...
+echo [Self-Updater] Safely replacing application executable and libraries...
+if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
+if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" move /y ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
+
+echo [Self-Updater] Overwriting binaries in '{appDirectory}'...
 xcopy /e /y /i ""{extractStageDir.Replace("'", "''")}\*"" ""{appDirectory.Replace("'", "''")}\""
 
 echo [Self-Updater] Restarting Emulator Auto Updater...
 start """" ""{currentExePath.Replace("'", "''")}""
+
+timeout /t 2 /nobreak > NUL
+if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
 exit
 ";
 
