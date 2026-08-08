@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        Title="Emulator Auto Updater"
+        Title="{Binding WindowTitle}"
         Icon="pack://application:,,,/Assets/EmulatorAutoUpdater.ico"
         Width="1520"
         Height="960"
@@ -290,13 +290,19 @@
                     <Image Source="pack://application:,,,/Assets/EmulatorAutoUpdater.png" Width="30" Height="30" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Emulator Auto Updater" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Emulator Auto Updater" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" />
+                        <Border Background="#4F46E5" CornerRadius="10" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="v1.1.0" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                        </Border>
+                    </StackPanel>
                     <TextBlock Text="에뮬레이터 통합 자동 업데이트 &amp; 초고속 병렬 다운로더" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,1,0,0" />
                 </StackPanel>
             </StackPanel>
 
             <!-- Main Fast Global Action Buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="⚡ 프로그램 업데이트 가능" Command="{Binding PerformAppSelfUpdateCommand}" Visibility="{Binding IsAppUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" Style="{StaticResource DangerButtonStyle}" Height="36" Margin="4,0" Padding="12,0" ToolTip="{Binding AppUpdateBannerText}" />
                 <Button Content="{Binding CheckAllUpdatesButtonText}" Command="{Binding CheckAllUpdatesCommand}" Style="{StaticResource SuccessButtonStyle}" MinWidth="160" Height="36" Margin="4,0" ToolTip="목록 내 모든 에뮬레이터의 업데이트를 최대 10개 병렬로 확인합니다." />
                 <Button Content="{Binding DownloadAllUpdatesButtonText}" Command="{Binding DownloadAllUpdatesCommand}" Style="{StaticResource PrimaryButtonStyle}" MinWidth="170" Height="36" Margin="4,0" ToolTip="전체 업데이트 확인 후 최신 빌드를 병렬로 자동 다운로드 및 압축 해제합니다." />
             </StackPanel>

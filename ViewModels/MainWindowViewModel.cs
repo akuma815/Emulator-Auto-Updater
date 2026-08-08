@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -40,9 +41,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _selectedReleaseVersion = string.Empty;
     private string _releaseNotes = string.Empty;
 
+    private readonly AppUpdateService _appUpdateService;
+    private bool _isAppUpdateAvailable;
+    private string _latestAppVersion = string.Empty;
+    private string _appUpdateDownloadUrl = string.Empty;
+    private string _appUpdateBannerText = string.Empty;
+
     public MainWindowViewModel(Func<string?> openFolderPicker)
     {
         _openFolderPicker = openFolderPicker ?? throw new ArgumentNullException(nameof(openFolderPicker));
+        _appUpdateService = new AppUpdateService(_releaseService);
+        AppUpdateService.CleanupTempUpdateFiles();
 
         AddEmulatorCommand = new RelayCommand(_ => AddEmulator(), _ => !IsBusy);
         RemoveEmulatorCommand = new RelayCommand(_ => RemoveEmulator(), _ => SelectedEmulator != null && !IsBusy && !IsEmulatorDownloading(SelectedEmulator) && !IsEmulatorChecking(SelectedEmulator));
@@ -65,6 +74,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ExcludeSelectedAssetFromPatternCommand = new RelayCommand(_ => ExcludeSelectedAssetFromPattern(), _ => SelectedEmulator != null && !IsBusy);
         DownloadOnlyCommand = new RelayCommand(async _ => await DownloadOnlyConcurrentAsync(), _ => CanDownloadSelectedAsset());
         DownloadUpdateCommand = new RelayCommand(async _ => await DownloadUpdateConcurrentAsync(), _ => CanDownloadSelectedAsset());
+        PerformAppSelfUpdateCommand = new RelayCommand(async _ => await PerformAppSelfUpdateAsync(), _ => IsAppUpdateAvailable && !IsBusy);
         ClearLogCommand = new RelayCommand(_ => ActivityLogText = string.Empty);
     }
 
@@ -88,7 +98,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand ExcludeSelectedAssetFromPatternCommand { get; }
     public RelayCommand DownloadOnlyCommand { get; }
     public RelayCommand DownloadUpdateCommand { get; }
+    public RelayCommand PerformAppSelfUpdateCommand { get; }
     public RelayCommand ClearLogCommand { get; }
+
+    public string WindowTitle => $"Emulator Auto Updater v{AppSettings.CurrentAppVersion}";
+
+    public bool IsAppUpdateAvailable
+    {
+        get => _isAppUpdateAvailable;
+        set
+        {
+            if (SetProperty(ref _isAppUpdateAvailable, value))
+            {
+                UpdateCommandStates();
+            }
+        }
+    }
+
+    public string LatestAppVersion
+    {
+        get => _latestAppVersion;
+        set => SetProperty(ref _latestAppVersion, value);
+    }
+
+    public string AppUpdateDownloadUrl
+    {
+        get => _appUpdateDownloadUrl;
+        set => SetProperty(ref _appUpdateDownloadUrl, value);
+    }
+
+    public string AppUpdateBannerText
+    {
+        get => _appUpdateBannerText;
+        set => SetProperty(ref _appUpdateBannerText, value);
+    }
 
     public string ActivityLogText
     {
@@ -500,6 +543,92 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         SelectedEmulator.AssetPattern = updatedPattern;
         StatusMessage = $"선택한 파일명('{targetAsset.AssetName}')을 제외하도록 패턴이 갱신되었습니다: '{updatedPattern}'";
+    }
+
+    public async Task CheckAppSelfUpdateAsync()
+    {
+        try
+        {
+            var updateCheck = await _appUpdateService.CheckForAppUpdateAsync(CancellationToken.None);
+            if (updateCheck.IsUpdateAvailable)
+            {
+                LatestAppVersion = updateCheck.LatestVersion;
+                AppUpdateDownloadUrl = updateCheck.DownloadUrl;
+                IsAppUpdateAvailable = true;
+                AppUpdateBannerText = $"⚡ 프로그램 신규 업데이트가 있습니다 (v{updateCheck.LatestVersion})! [프로그램 업데이트] 버튼을 눌러 자동 갱신하세요.";
+                AppendLog($"[프로그램 업데이트] 새 버전(v{updateCheck.LatestVersion})이 출시되었습니다. 상단 버튼을 클릭해 최신 버전으로 갱신하세요.");
+            }
+            else
+            {
+                IsAppUpdateAvailable = false;
+            }
+        }
+        catch
+        {
+            // Ignore failure during background self-update check
+        }
+    }
+
+    public async Task PerformAppSelfUpdateAsync()
+    {
+        if (!IsAppUpdateAvailable || string.IsNullOrWhiteSpace(AppUpdateDownloadUrl))
+        {
+            StatusMessage = "업데이트할 최신 프로그램 아티팩트 URL을 찾을 수 없습니다.";
+            return;
+        }
+
+        var confirm = System.Windows.MessageBox.Show(
+            $"Emulator Auto Updater 최신 버전(v{LatestAppVersion})으로 업데이트를 진행하시겠습니까?\n\n업데이트 파일 다운로드 후 프로그램이 자동 종료되고 새 버전으로 재기동됩니다.",
+            "프로그램 자동 업데이트",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusMessage = $"프로그램 업데이트 다운로드 중 (v{LatestAppVersion})...";
+            Progress = 15;
+
+            var tempDir = AppUpdateService.GetUpdateTempDirectory();
+            var zipPath = Path.Combine(tempDir, "update.zip");
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+                var bytes = await httpClient.GetByteArrayAsync(AppUpdateDownloadUrl);
+                await File.WriteAllBytesAsync(zipPath, bytes);
+            }
+
+            Progress = 85;
+            StatusMessage = "업데이트 파일 준비 완료. 프로그램을 자동 재기동합니다...";
+
+            var currentProcess = Process.GetCurrentProcess();
+            var currentExePath = Environment.ProcessPath ?? currentProcess.MainModule?.FileName ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmulatorAutoUpdater.exe");
+            var appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+
+            var batPath = AppUpdateService.CreateUpdaterBatchScript(currentProcess.Id, zipPath, appDir, currentExePath);
+
+            var psi = new ProcessStartInfo("cmd.exe", $"/c \"{batPath}\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                WorkingDirectory = tempDir
+            };
+
+            Process.Start(psi);
+            System.Windows.Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            var friendlyMsg = FriendlyExceptionHelper.FormatUserFriendlyErrorMessage(ex, "프로그램 자동 업데이트");
+            StatusMessage = $"프로그램 업데이트 실패: {ex.Message}";
+            AppendLog($"❌ [오류/Exception] 프로그램 자동 업데이트 중 실패: {ex.Message}");
+            System.Windows.MessageBox.Show(friendlyMsg, "업데이트 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     public void UpdateWindowPlacement(
@@ -2646,6 +2775,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             DownloadAllUpdatesCommand.RaiseCanExecuteChanged();
             DownloadOnlyCommand.RaiseCanExecuteChanged();
             DownloadUpdateCommand.RaiseCanExecuteChanged();
+            PerformAppSelfUpdateCommand.RaiseCanExecuteChanged();
         });
     }
 

@@ -44,6 +44,8 @@ public partial class MainWindow : Window
         CaptureWindowPlacement();
         CaptureGridColumnWidths();
 
+        _ = _viewModel.CheckAppSelfUpdateAsync();
+
         if (_viewModel.CheckAllUpdatesOnStartup)
         {
             await _viewModel.CheckAllUpdatesAsync();
