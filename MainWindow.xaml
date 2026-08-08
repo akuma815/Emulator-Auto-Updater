@@ -15,6 +15,7 @@
         mc:Ignorable="d">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <CollectionViewSource x:Key="EmulatorCollectionViewSource" Source="{Binding Emulators}">
             <CollectionViewSource.SortDescriptions>
                 <componentModel:SortDescription PropertyName="Name" Direction="Ascending" />
