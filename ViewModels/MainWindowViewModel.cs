@@ -390,26 +390,46 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        string sourceName = SelectedEmulator.AssetPattern;
+        string sourceName = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(sourceName) || sourceName == AppSettings.DefaultAssetPatternValue)
+        // Priority 1: User's explicitly selected asset in the bottom asset list
+        if (SelectedAsset != null && !string.IsNullOrWhiteSpace(SelectedAsset.AssetName))
         {
-            var firstAsset = ReleaseAssets.FirstOrDefault();
-            if (firstAsset != null && !string.IsNullOrWhiteSpace(firstAsset.AssetName))
-            {
-                sourceName = firstAsset.AssetName;
-            }
+            sourceName = SelectedAsset.AssetName;
+        }
+        // Priority 2: Text inside AssetPattern if it is a raw filename (not yet converted)
+        else if (!string.IsNullOrWhiteSpace(SelectedEmulator.AssetPattern) &&
+                 SelectedEmulator.AssetPattern != AppSettings.DefaultAssetPatternValue &&
+                 !SelectedEmulator.AssetPattern.StartsWith("(?i)"))
+        {
+            sourceName = SelectedEmulator.AssetPattern;
+        }
+        // Priority 3: Fallback to the first asset in ReleaseAssets
+        else if (ReleaseAssets.Count > 0 && !string.IsNullOrWhiteSpace(ReleaseAssets.First().AssetName))
+        {
+            sourceName = ReleaseAssets.First().AssetName;
+        }
+        // Priority 4: Fallback to AssetPattern
+        else if (!string.IsNullOrWhiteSpace(SelectedEmulator.AssetPattern))
+        {
+            sourceName = SelectedEmulator.AssetPattern;
         }
 
         if (string.IsNullOrWhiteSpace(sourceName))
         {
-            StatusMessage = "Asset Pattern 입력란에 예시 파일명(예: PPSSPPWindows64-v1.17.1.zip)을 적거나 업데이트를 조회한 후 누르세요.";
+            StatusMessage = "Asset Pattern 입력란에 예시 파일명(예: PPSSPPWindows64-v1.17.1.zip)을 적거나, 하단 파일 목록에서 변환할 항목을 먼저 선택하세요.";
             return;
         }
 
+        try
+        {
+            System.Windows.Clipboard.SetText(sourceName);
+        }
+        catch { }
+
         var converted = AssetPatternHelper.ConvertFilenameToAssetPattern(sourceName);
         SelectedEmulator.AssetPattern = converted;
-        StatusMessage = $"'{SelectedEmulator.Name}'의 Asset Pattern이 추천 정규식 패턴('{converted}')으로 변환되었습니다.";
+        StatusMessage = $"선택한 파일명('{sourceName}')을 추천 정규식 패턴('{converted}')으로 변환했습니다.";
     }
 
     public void CopySelectedAssetName()
