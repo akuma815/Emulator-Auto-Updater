@@ -1137,11 +1137,12 @@ public sealed class GitHubReleaseService
 
     private static BuildAsset CreateBuildAsset(GitHubAsset asset, string version, DateTimeOffset publishedAt)
     {
-        var resolvedVersion = ResolveVersion(version, asset.Name, publishedAt);
+        var localPublishedAt = publishedAt > DateTimeOffset.MinValue ? publishedAt.ToLocalTime() : DateTimeOffset.Now;
+        var resolvedVersion = ResolveVersion(version, asset.Name, localPublishedAt);
         return new BuildAsset
         {
             Version = resolvedVersion,
-            PublishedAt = publishedAt,
+            PublishedAt = localPublishedAt,
             AssetName = asset.Name,
             DownloadUrl = asset.BrowserDownloadUrl
         };
@@ -1183,16 +1184,23 @@ public sealed class GitHubReleaseService
             return false;
         }
 
-        return Regex.IsMatch(v, @"^\d+(\.\d+)+(-\w+)?$");
+        return Regex.IsMatch(v, @"^\d+([\.-]\d+)+(-\w+)?$");
     }
 
     private static string? ExtractRealVersionNumber(string assetName)
     {
-        var match = Regex.Match(assetName, @"\b\d+\.\d+(\.\d+)?(-\d+)?\b");
+        var match = Regex.Match(assetName, @"\b\d+[\.-]\d+([\.-]\d+)?(-\d+)?\b");
         if (match.Success)
         {
             return match.Value;
         }
+
+        var buildNumberMatch = Regex.Match(assetName, @"-(\d+-\d+)-x64", RegexOptions.IgnoreCase);
+        if (buildNumberMatch.Success)
+        {
+            return buildNumberMatch.Groups[1].Value;
+        }
+
         return null;
     }
 

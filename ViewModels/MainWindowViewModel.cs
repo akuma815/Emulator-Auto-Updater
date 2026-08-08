@@ -2587,7 +2587,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (DateTimeOffset.TryParse(inst, out var instDate) &&
             DateTimeOffset.TryParse(latest, out var latestDate))
         {
-            return latestDate <= instDate;
+            return latestDate.UtcDateTime <= instDate.UtcDateTime;
         }
 
         return false;
