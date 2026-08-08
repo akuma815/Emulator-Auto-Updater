@@ -638,7 +638,8 @@
                         <TextBlock Text="📦 조회된 다운로드 파일 목록" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="📋 파일명 복사" Command="{Binding CopySelectedAssetNameCommand}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="선택한 패치 파일명을 클립보드에 복사합니다." />
-                            <Button Content="🪄 패턴에 반영" Command="{Binding ApplySelectedAssetToPatternCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="8,3" FontSize="11" Margin="0" ToolTip="선택한 파일명을 클립보드에 복사하고 추천 Asset Pattern 정규식으로 전환합니다." />
+                            <Button Content="🪄 패턴에 반영" Command="{Binding ApplySelectedAssetToPatternCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="선택한 파일명을 추천 Asset Pattern 정규식으로 전환합니다." />
+                            <Button Content="🚫 패턴에서 제외" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3" FontSize="11" Margin="0" ToolTip="선택한 제외 대상 파일명(예: symbols, debug)을 분석하여 패턴에 부정 전방 탐색 제외 조건((?!.*symbols))을 자동으로 추가합니다." />
                         </StackPanel>
                     </Grid>
 
@@ -654,6 +655,7 @@
                             <ContextMenu>
                                 <MenuItem Header="📋 파일명 복사" Command="{Binding CopySelectedAssetNameCommand}" />
                                 <MenuItem Header="🪄 Asset Pattern으로 복사 &amp; 자동 변환" Command="{Binding ApplySelectedAssetToPatternCommand}" />
+                                <MenuItem Header="🚫 패턴에서 제외 조건 추가" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" />
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>

@@ -62,6 +62,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ConvertSelectedAssetPatternCommand = new RelayCommand(_ => ConvertSelectedAssetPattern(), _ => SelectedEmulator != null && !IsBusy);
         CopySelectedAssetNameCommand = new RelayCommand(_ => CopySelectedAssetName());
         ApplySelectedAssetToPatternCommand = new RelayCommand(_ => ApplySelectedAssetToPattern(), _ => SelectedEmulator != null && !IsBusy);
+        ExcludeSelectedAssetFromPatternCommand = new RelayCommand(_ => ExcludeSelectedAssetFromPattern(), _ => SelectedEmulator != null && !IsBusy);
         DownloadOnlyCommand = new RelayCommand(async _ => await DownloadOnlyConcurrentAsync(), _ => CanDownloadSelectedAsset());
         DownloadUpdateCommand = new RelayCommand(async _ => await DownloadUpdateConcurrentAsync(), _ => CanDownloadSelectedAsset());
         ClearLogCommand = new RelayCommand(_ => ActivityLogText = string.Empty);
@@ -84,6 +85,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand ConvertSelectedAssetPatternCommand { get; }
     public RelayCommand CopySelectedAssetNameCommand { get; }
     public RelayCommand ApplySelectedAssetToPatternCommand { get; }
+    public RelayCommand ExcludeSelectedAssetFromPatternCommand { get; }
     public RelayCommand DownloadOnlyCommand { get; }
     public RelayCommand DownloadUpdateCommand { get; }
     public RelayCommand ClearLogCommand { get; }
@@ -476,6 +478,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var converted = AssetPatternHelper.ConvertFilenameToAssetPattern(targetAsset.AssetName);
         SelectedEmulator.AssetPattern = converted;
         StatusMessage = $"선택한 파일명('{targetAsset.AssetName}')으로 추천 정규식 패턴('{converted}')이 생성되었습니다.";
+    }
+
+    public void ExcludeSelectedAssetFromPattern()
+    {
+        if (SelectedEmulator == null)
+        {
+            StatusMessage = "패턴을 변경할 에뮬레이터를 먼저 선택하세요.";
+            return;
+        }
+
+        var targetAsset = SelectedAsset;
+        if (targetAsset == null || string.IsNullOrWhiteSpace(targetAsset.AssetName))
+        {
+            StatusMessage = "패턴에서 제외할 파일 항목을 하단 목록에서 선택하세요.";
+            return;
+        }
+
+        var currentPattern = SelectedEmulator.AssetPattern;
+        var updatedPattern = AssetPatternHelper.BuildExclusionAssetPattern(currentPattern, targetAsset.AssetName);
+
+        SelectedEmulator.AssetPattern = updatedPattern;
+        StatusMessage = $"선택한 파일명('{targetAsset.AssetName}')을 제외하도록 패턴이 갱신되었습니다: '{updatedPattern}'";
     }
 
     public void UpdateWindowPlacement(
@@ -2588,6 +2612,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             OpenConfigFileCommand.RaiseCanExecuteChanged();
             SaveConfigFileAsCommand.RaiseCanExecuteChanged();
             ConvertSelectedAssetPatternCommand.RaiseCanExecuteChanged();
+            ApplySelectedAssetToPatternCommand.RaiseCanExecuteChanged();
+            ExcludeSelectedAssetFromPatternCommand.RaiseCanExecuteChanged();
             BrowseFolderCommand.RaiseCanExecuteChanged();
             CheckUpdatesCommand.RaiseCanExecuteChanged();
             CheckAllUpdatesCommand.RaiseCanExecuteChanged();

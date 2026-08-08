@@ -24,6 +24,20 @@ public class AssetPatternHelperTests
         Assert.True(isMatched, $"Generated pattern '{result}' failed to match original input filename '{input}'");
     }
 
+    [Theory]
+    [InlineData("(?i)pcsx2.*(win|windows).*x64.*Qt.*\\.7z$", "pcsx2-v2.6.3-windows-x64-Qt-symbols.7z", "(?i)(?!.*symbols)pcsx2.*(win|windows).*x64.*Qt.*\\.7z$")]
+    [InlineData("(?i)duckstation.*(win|windows).*x64.*\\.zip$", "duckstation-windows-x64-symbols.zip", "(?i)(?!.*symbols)duckstation.*(win|windows).*x64.*\\.zip$")]
+    public void BuildExclusionAssetPattern_ShouldInjectNegativeLookahead(string currentPattern, string excludedFilename, string expectedPattern)
+    {
+        var result = AssetPatternHelper.BuildExclusionAssetPattern(currentPattern, excludedFilename);
+        Assert.Equal(expectedPattern, result);
+
+        // Verify that target filename matches while excluded filename fails match!
+        var targetFilename = excludedFilename.Replace("-symbols", "");
+        Assert.True(Regex.IsMatch(targetFilename, result, RegexOptions.IgnoreCase));
+        Assert.False(Regex.IsMatch(excludedFilename, result, RegexOptions.IgnoreCase));
+    }
+
     [Fact]
     public void FindAssets_VariantPattern_ShouldDifferentiateBetweenClangPgoAndMsvc()
     {
