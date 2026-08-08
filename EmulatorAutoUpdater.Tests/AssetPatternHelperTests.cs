@@ -10,10 +10,10 @@ namespace EmulatorAutoUpdater.Tests;
 public class AssetPatternHelperTests
 {
     [Theory]
-    [InlineData("windows-x86_64.zip", "(?i).*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
-    [InlineData("duckstation-windows-x86_64-release.zip", "(?i)duckstation.*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
-    [InlineData("Eden-Windows-0133caf702-amd64-clang-pgo.zip", "(?i)Eden.*(win|windows).*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
-    [InlineData("dolphin-master-5.0-21430-x64.7z", "(?i)dolphin.*(x64|amd64|x86_64|64).*\\.(zip|7z)$")]
+    [InlineData("windows-x86_64.zip", "(?i).*(win|windows).*x86_64.*\\.zip$")]
+    [InlineData("duckstation-windows-x86_64-release.zip", "(?i)duckstation.*(win|windows).*x86_64.*release.*\\.zip$")]
+    [InlineData("Eden-Windows-5ec94b1971-amd64-clang-pgo.zip", "(?i)Eden.*(win|windows).*amd64.*clang.*pgo.*\\.zip$")]
+    [InlineData("dolphin-master-5.0-21430-x64.7z", "(?i)dolphin.*master.*x64.*\\.7z$")]
     public void ConvertFilenameToAssetPattern_ShouldGenerateExpectedRegex(string input, string expectedPattern)
     {
         var result = AssetPatternHelper.ConvertFilenameToAssetPattern(input);
@@ -22,6 +22,27 @@ public class AssetPatternHelperTests
         // Verify that the generated regex pattern actually matches the original input filename!
         var isMatched = Regex.IsMatch(input, result, RegexOptions.IgnoreCase);
         Assert.True(isMatched, $"Generated pattern '{result}' failed to match original input filename '{input}'");
+    }
+
+    [Fact]
+    public void FindAssets_VariantPattern_ShouldDifferentiateBetweenClangPgoAndMsvc()
+    {
+        var service = new GitHubReleaseService();
+        var release = new GitHubReleaseService.GitHubRelease
+        {
+            TagName = "5ec94b1971",
+            Assets = new List<GitHubReleaseService.GitHubAsset>
+            {
+                new GitHubReleaseService.GitHubAsset { Name = "Eden-Windows-5ec94b1971-amd64-clang-pgo.zip", BrowserDownloadUrl = "http://example.com/clang-pgo" },
+                new GitHubReleaseService.GitHubAsset { Name = "Eden-Windows-5ec94b1971-amd64-msvc.zip", BrowserDownloadUrl = "http://example.com/msvc" }
+            }
+        };
+
+        var clangPgoPattern = AssetPatternHelper.ConvertFilenameToAssetPattern("Eden-Windows-5ec94b1971-amd64-clang-pgo.zip");
+        var matchedClang = service.FindAssets(release, clangPgoPattern);
+
+        Assert.Single(matchedClang);
+        Assert.Equal("Eden-Windows-5ec94b1971-amd64-clang-pgo.zip", matchedClang.First().AssetName);
     }
 
     [Fact]

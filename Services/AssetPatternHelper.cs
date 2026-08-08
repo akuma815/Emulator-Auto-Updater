@@ -22,7 +22,7 @@ public static class AssetPatternHelper
             return trimmed;
         }
 
-        // Detect extension
+        // Detect exact extension
         var extMatch = Regex.Match(trimmed, @"\.(zip|7z|rar|tar\.gz|tar\.xz|exe|msi)$", RegexOptions.IgnoreCase);
         string extensionRegex = @"\.(zip|7z)$";
         string baseName = trimmed;
@@ -30,16 +30,16 @@ public static class AssetPatternHelper
         if (extMatch.Success)
         {
             var ext = extMatch.Value.TrimStart('.').ToLowerInvariant();
-            if (ext is not ("zip" or "7z"))
-            {
-                extensionRegex = @"\." + Regex.Escape(ext) + "$";
-            }
+            extensionRegex = @"\." + Regex.Escape(ext) + "$";
             baseName = trimmed[..^extMatch.Value.Length];
         }
 
         // Pre-normalize compound architecture words (e.g. x86_64, x86-64)
         baseName = Regex.Replace(baseName, @"(?i)\bx86[-_]64\b", "x86_64");
         baseName = Regex.Replace(baseName, @"(?i)\bx86[-_]32\b", "x86_32");
+
+        // Pre-normalize version strings like v1.18.0 or 5.0 into a unified token
+        baseName = Regex.Replace(baseName, @"(?i)\b(v?\d+(\.\d+)+)\b", "_VER_");
 
         // Tokenize baseName into words (including _) and non-word delimiters
         var matches = Regex.Matches(baseName, @"[a-zA-Z0-9_]+|[^a-zA-Z0-9_]+");
@@ -93,21 +93,21 @@ public static class AssetPatternHelper
             }
 
             // Detect Arch keywords
-            if (Regex.IsMatch(token, @"^(x64|amd64|x86_64|x86-64|64bit|64)$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(token, @"^(x64|amd64|x86_64|x86-64|64bit)$", RegexOptions.IgnoreCase))
             {
                 if (!addedArch)
                 {
-                    patternBuilder.Append(".*(x64|amd64|x86_64|64)");
+                    patternBuilder.Append(".*" + Regex.Escape(token));
                     addedArch = true;
                 }
                 continue;
             }
 
-            if (Regex.IsMatch(token, @"^(x86|x86_32|x86-32|32bit|32)$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(token, @"^(x86|x86_32|x86-32|32bit)$", RegexOptions.IgnoreCase))
             {
                 if (!addedArch)
                 {
-                    patternBuilder.Append(".*(x86|32)");
+                    patternBuilder.Append(".*" + Regex.Escape(token));
                     addedArch = true;
                 }
                 continue;
@@ -117,26 +117,25 @@ public static class AssetPatternHelper
             {
                 if (!addedArch)
                 {
-                    patternBuilder.Append(".*(arm64|aarch64)");
+                    patternBuilder.Append(".*" + Regex.Escape(token));
                     addedArch = true;
                 }
                 continue;
             }
 
-            // Detect Version/Build/Hash/Date or build tags
-            var isVersionOrHashOrBuildTag =
-                Regex.IsMatch(token, @"^\d+$") || // numeric build numbers or dates
-                Regex.IsMatch(token, @"^(v?\d+(\.\d+)*)$", RegexOptions.IgnoreCase) || // v1.17.1, 5.0
-                Regex.IsMatch(token, @"^[0-9a-f]{7,40}$", RegexOptions.IgnoreCase) || // commit hash like 0133caf702
-                Regex.IsMatch(token, @"^(master|main|nightly|canary|dev|release|stable|msvc|clang|pgo|qt|sdl|build)$", RegexOptions.IgnoreCase);
+            // Detect transient versions, dates, build numbers, or commit hashes to replace with .*
+            var isTransientVersionOrHash =
+                token.Equals("_VER_", StringComparison.OrdinalIgnoreCase) ||
+                Regex.IsMatch(token, @"^\d{3,}$") || // numeric build numbers or dates (e.g. 21430, 20260728)
+                Regex.IsMatch(token, @"^[0-9a-f]{7,40}$", RegexOptions.IgnoreCase); // commit hash like 5ec94b1971, 0133caf702
 
-            if (isVersionOrHashOrBuildTag)
+            if (isTransientVersionOrHash)
             {
                 patternBuilder.Append(".*");
                 continue;
             }
 
-            // Structural application name token
+            // Variant / Title token (e.g. Eden, clang, pgo, release, symbols, qt, sdl, msvc)
             if (!hasAppTitle)
             {
                 if (addedOs || addedArch)
