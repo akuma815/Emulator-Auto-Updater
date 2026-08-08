@@ -103,11 +103,18 @@ public sealed class AppUpdateService
         var tempDir = GetUpdateTempDirectory();
         var extractStageDir = Path.Combine(tempDir, "extracted");
         var batPath = Path.Combine(tempDir, "update_app.bat");
+        var logPath = Path.Combine(tempDir, "updater.log");
 
         var script = $@"@echo off
 chcp 65001 > NUL
 title Emulator Auto Updater Self-Updater
-echo [Self-Updater] Waiting for EmulatorAutoUpdater.exe (PID: {processId}) to exit...
+set LOGFILE=""{logPath.Replace("'", "''")}""
+
+echo [%date% %time%] [Self-Updater] Starting update process... > %LOGFILE%
+echo [%date% %time%] Target directory: '{appDirectory}' >> %LOGFILE%
+echo [%date% %time%] Zip file path: '{zipFilePath}' >> %LOGFILE%
+echo [%date% %time%] Waiting for PID {processId} to exit... >> %LOGFILE%
+
 timeout /t 2 /nobreak > NUL
 
 :wait_loop
@@ -118,27 +125,32 @@ if %ERRORLEVEL%==0 (
 )
 
 timeout /t 2 /nobreak > NUL
+echo [%date% %time%] PID {processId} exited. >> %LOGFILE%
 
-echo [Self-Updater] Extracting update files to staging area...
+echo [%date% %time%] Extracting update zip... >> %LOGFILE%
 if exist ""{extractStageDir.Replace("'", "''")}"" rmdir /s /q ""{extractStageDir.Replace("'", "''")}""
-powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -Path '{zipFilePath.Replace("'", "''")}' -DestinationPath '{extractStageDir.Replace("'", "''")}' -Force""
+powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -Path '{zipFilePath.Replace("'", "''")}' -DestinationPath '{extractStageDir.Replace("'", "''")}' -Force"" >> %LOGFILE% 2>&1
 
 if exist ""{appDirectory.Replace("'", "''")}\config.json"" (
-    if exist ""{extractStageDir.Replace("'", "''")}\config.json"" del /f /q ""{extractStageDir.Replace("'", "''")}\config.json"" 2>NUL
+    if exist ""{extractStageDir.Replace("'", "''")}\config.json"" (
+        echo [%date% %time%] Preserving user config.json >> %LOGFILE%
+        del /f /q ""{extractStageDir.Replace("'", "''")}\config.json"" 2>NUL
+    )
 )
 
-echo [Self-Updater] Safely replacing application executable and libraries...
+echo [%date% %time%] Renaming old executable... >> %LOGFILE%
 if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
-if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" move /y ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
+if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" move /y ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe"" ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" >> %LOGFILE% 2>&1
 
-echo [Self-Updater] Overwriting binaries in '{appDirectory}'...
-xcopy /e /y /i ""{extractStageDir.Replace("'", "''")}\*"" ""{appDirectory.Replace("'", "''")}\""
+echo [%date% %time%] Copying new binary files... >> %LOGFILE%
+xcopy /e /y /i ""{extractStageDir.Replace("'", "''")}\*"" ""{appDirectory.Replace("'", "''")}\"" >> %LOGFILE% 2>&1
 
-echo [Self-Updater] Restarting Emulator Auto Updater...
+echo [%date% %time%] Restarting application... >> %LOGFILE%
 start """" ""{currentExePath.Replace("'", "''")}""
 
 timeout /t 2 /nobreak > NUL
 if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
+echo [%date% %time%] Update complete! >> %LOGFILE%
 exit
 ";
 

@@ -613,10 +613,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             var batPath = AppUpdateService.CreateUpdaterBatchScript(currentProcess.Id, zipPath, appDir, currentExePath);
 
-            var psi = new ProcessStartInfo("cmd.exe", $"/c \"{batPath}\"")
+            var psi = new ProcessStartInfo("cmd.exe", $"/c start \"Self-Updater\" /min \"{batPath}\"")
             {
-                CreateNoWindow = true,
-                UseShellExecute = false,
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = tempDir
             };
 
