@@ -101,6 +101,7 @@ public sealed class AppUpdateService
     public static string CreateUpdaterBatchScript(int processId, string zipFilePath, string appDirectory, string currentExePath)
     {
         var tempDir = GetUpdateTempDirectory();
+        var extractStageDir = Path.Combine(tempDir, "extracted");
         var batPath = Path.Combine(tempDir, "update_app.bat");
 
         var script = $@"@echo off
@@ -116,8 +117,16 @@ if %ERRORLEVEL%==0 (
     goto wait_loop
 )
 
-echo [Self-Updater] Extracting new release update to '{appDirectory}'...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -Path '{zipFilePath.Replace("'", "''")}' -DestinationPath '{appDirectory.Replace("'", "''")}' -Force""
+echo [Self-Updater] Extracting update files to staging area...
+if exist ""{extractStageDir.Replace("'", "''")}"" rmdir /s /q ""{extractStageDir.Replace("'", "''")}""
+powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -Path '{zipFilePath.Replace("'", "''")}' -DestinationPath '{extractStageDir.Replace("'", "''")}' -Force""
+
+if exist ""{appDirectory.Replace("'", "''")}\config.json"" (
+    if exist ""{extractStageDir.Replace("'", "''")}\config.json"" del /f /q ""{extractStageDir.Replace("'", "''")}\config.json"" 2>NUL
+)
+
+echo [Self-Updater] Overwriting application binaries in '{appDirectory}'...
+xcopy /e /y /i ""{extractStageDir.Replace("'", "''")}\*"" ""{appDirectory.Replace("'", "''")}\""
 
 echo [Self-Updater] Restarting Emulator Auto Updater...
 start """" ""{currentExePath.Replace("'", "''")}""
