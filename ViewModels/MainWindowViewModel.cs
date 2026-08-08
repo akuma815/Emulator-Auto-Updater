@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Windows;
 using EmulatorAutoUpdater.Models;
 using EmulatorAutoUpdater.Services;
@@ -2570,23 +2571,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return vLatest <= vInst;
         }
 
-        // 4. DateTimeOffset / Date comparison (same-day or 24h tolerance for web-parsed nightlies)
+        // 4. Revision number comparison (e.g., 1.20.4-830-ge41a16a6b2 vs 1.20.4-835-g123456)
+        var revInstMatch = Regex.Match(instClean, @"-(\d+)-g[0-9a-f]+$", RegexOptions.IgnoreCase);
+        var revLatestMatch = Regex.Match(latestClean, @"-(\d+)-g[0-9a-f]+$", RegexOptions.IgnoreCase);
+        if (revInstMatch.Success && revLatestMatch.Success &&
+            long.TryParse(revInstMatch.Groups[1].Value, out var revInst) &&
+            long.TryParse(revLatestMatch.Groups[1].Value, out var revLatest))
+        {
+            return revLatest <= revInst;
+        }
+
+        // 5. Date / Timestamp comparison (when no explicit version tag exists):
+        //    If latestDate > instDate -> Update Available (latest is strictly newer than installed).
+        //    If latestDate <= instDate -> Up To Date!
         if (DateTimeOffset.TryParse(inst, out var instDate) &&
             DateTimeOffset.TryParse(latest, out var latestDate))
         {
-            return latestDate <= instDate || instDate.Date == latestDate.Date || Math.Abs((latestDate - instDate).TotalHours) <= 24;
-        }
-
-        // 5. Token/Substring matching (for named builds)
-        if (instClean.Length >= 3 && latestClean.Length >= 3 &&
-            !char.IsDigit(instClean[0]) && !char.IsDigit(latestClean[0]))
-        {
-            if (instClean.Equals(latestClean, StringComparison.OrdinalIgnoreCase) ||
-                instClean.Contains(latestClean, StringComparison.OrdinalIgnoreCase) ||
-                latestClean.Contains(instClean, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
+            return latestDate <= instDate;
         }
 
         return false;
