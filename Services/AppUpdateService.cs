@@ -78,18 +78,26 @@ public sealed class AppUpdateService
         return false;
     }
 
-    public static string GetUpdateTempDirectory()
+    public static string GetUpdateTempDirectory(string? appDirectory = null)
     {
-        var temp = Path.Combine(Path.GetTempPath(), "EmulatorAutoUpdater_AppUpdate");
+        var baseDir = !string.IsNullOrWhiteSpace(appDirectory) && Directory.Exists(appDirectory)
+            ? appDirectory
+            : AppDomain.CurrentDomain.BaseDirectory;
+
+        var temp = Path.Combine(baseDir, "temp");
         Directory.CreateDirectory(temp);
         return temp;
     }
 
-    public static void CleanupTempUpdateFiles()
+    public static void CleanupTempUpdateFiles(string? appDirectory = null)
     {
         try
         {
-            var temp = Path.Combine(Path.GetTempPath(), "EmulatorAutoUpdater_AppUpdate");
+            var baseDir = !string.IsNullOrWhiteSpace(appDirectory) && Directory.Exists(appDirectory)
+                ? appDirectory
+                : AppDomain.CurrentDomain.BaseDirectory;
+
+            var temp = Path.Combine(baseDir, "temp");
             if (Directory.Exists(temp))
             {
                 Directory.Delete(temp, recursive: true);
@@ -100,7 +108,7 @@ public sealed class AppUpdateService
 
     public static string CreateUpdaterBatchScript(int processId, string zipFilePath, string appDirectory, string currentExePath)
     {
-        var tempDir = GetUpdateTempDirectory();
+        var tempDir = GetUpdateTempDirectory(appDirectory);
         var extractStageDir = Path.Combine(tempDir, "extracted");
         var batPath = Path.Combine(tempDir, "update_app.bat");
         var logPath = Path.Combine(tempDir, "updater.log");
@@ -150,6 +158,9 @@ start """" ""{currentExePath.Replace("'", "''")}""
 
 timeout /t 2 /nobreak > NUL
 if exist ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" del /f /q ""{appDirectory.Replace("'", "''")}\EmulatorAutoUpdater.exe.old"" 2>NUL
+
+echo [%date% %time%] Cleaning up temp folder... >> %LOGFILE%
+if exist ""{tempDir.Replace("'", "''")}"" rmdir /s /q ""{tempDir.Replace("'", "''")}"" 2>NUL
 echo [%date% %time%] Update complete! >> %LOGFILE%
 exit /b 0
 ";

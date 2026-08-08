@@ -594,7 +594,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             StatusMessage = $"프로그램 업데이트 다운로드 중 (v{LatestAppVersion})...";
             Progress = 15;
 
-            var tempDir = AppUpdateService.GetUpdateTempDirectory();
+            var currentProcess = Process.GetCurrentProcess();
+            var currentExePath = Environment.ProcessPath ?? currentProcess.MainModule?.FileName ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmulatorAutoUpdater.exe");
+            var appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+
+            var tempDir = AppUpdateService.GetUpdateTempDirectory(appDir);
             var zipPath = Path.Combine(tempDir, "update.zip");
 
             using (var httpClient = new HttpClient())
@@ -606,10 +610,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             Progress = 85;
             StatusMessage = "업데이트 파일 준비 완료. 프로그램을 자동 재기동합니다...";
-
-            var currentProcess = Process.GetCurrentProcess();
-            var currentExePath = Environment.ProcessPath ?? currentProcess.MainModule?.FileName ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmulatorAutoUpdater.exe");
-            var appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
 
             var batPath = AppUpdateService.CreateUpdaterBatchScript(currentProcess.Id, zipPath, appDir, currentExePath);
 
