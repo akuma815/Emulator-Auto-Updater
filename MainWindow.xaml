@@ -294,7 +294,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Emulator Auto Updater" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" />
                         <Border Background="#4F46E5" CornerRadius="10" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="v1.1.0" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                            <TextBlock Text="v1.2.0" Foreground="White" FontSize="11" FontWeight="SemiBold" />
                         </Border>
                     </StackPanel>
                     <TextBlock Text="에뮬레이터 통합 자동 업데이트 &amp; 초고속 병렬 다운로더" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,1,0,0" />
