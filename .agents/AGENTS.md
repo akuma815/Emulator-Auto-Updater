@@ -10,3 +10,8 @@
   - Immediately after any feature update or fix, update `USER_GUIDE.md` in the repository root.
   - ALWAYS copy/publish the updated `USER_GUIDE.md` to `G:\Downloads\Emulator Auto Updater\USER_GUIDE.md`.
   - Maintain clear, structured, user-friendly language in `USER_GUIDE.md`.
+
+## 3. MANDATORY CONFIG PRESERVATION DIRECTIVE
+- **NEVER Overwrite or Touch `config.json`**:
+  - Never overwrite, replace, delete, or inject hardcoded values into `config.json` in `G:\Downloads\Emulator Auto Updater\`.
+  - When publishing or packaging release archives, always use a separate clean output directory so that the user's live `config.json` remains completely intact and unaffected.
