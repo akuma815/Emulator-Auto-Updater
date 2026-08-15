@@ -202,6 +202,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         set => SetProperty(ref _useVersionSubfolders, value);
     }
 
+    public IReadOnlyList<LanguageOption> SupportedLanguages => LocalizationService.SupportedLanguages;
+
+    public string SelectedLanguageCode
+    {
+        get => LocalizationService.CurrentLanguageCode;
+        set
+        {
+            if (LocalizationService.CurrentLanguageCode != value)
+            {
+                LocalizationService.SetLanguage(value);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckAllUpdatesButtonText)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DownloadAllUpdatesButtonText)));
+                _ = SaveSettingsToDiskAsync();
+            }
+        }
+    }
+
     public string DefaultAssetPattern
     {
         get => _defaultAssetPattern;
@@ -332,6 +350,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             DefaultAssetPattern = settings?.DefaultAssetPattern ?? AppSettings.DefaultAssetPatternValue;
             WindowPlacement = settings?.WindowPlacement;
             EmulatorGridColumnWidths = settings?.EmulatorGridColumnWidths ?? [];
+
+            LocalizationService.Initialize(settings?.LanguageCode);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
 
             Emulators.Clear();
             _updateHistory.Clear();
@@ -2435,6 +2456,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 CheckAllUpdatesOnStartup = CheckAllUpdatesOnStartup,
                 UseVersionSubfolders = UseVersionSubfolders,
+                LanguageCode = SelectedLanguageCode,
                 DefaultAssetPattern = DefaultAssetPattern,
                 WindowPlacement = WindowPlacement,
                 EmulatorGridColumnWidths = columnWidthsSnapshot,

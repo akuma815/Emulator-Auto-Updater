@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Header & Subtitles -->
+    <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
+    <sys:String x:Key="AppSubtitle">All-in-One Emulator Auto Updater &amp; Parallel Downloader</sys:String>
+    <sys:String x:Key="AppUpdateAvailableBadge">⚡ New App Version {0} Available - [Update]</sys:String>
+    
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">🔍 Check All Updates</sys:String>
+    <sys:String x:Key="BtnCancelOperation">🛑 Cancel</sys:String>
+    <sys:String x:Key="BtnSubfolderManager">📁 Version Subfolders</sys:String>
+    <sys:String x:Key="LabelLanguage">🌐 Language / 언어:</sys:String>
+
+    <!-- Global Options -->
+    <sys:String x:Key="OptCheckAllOnStartup">Automatically check all updates on startup</sys:String>
+    <sys:String x:Key="OptUseVersionSubfolders">Create version subfolders on update (Independent run)</sys:String>
+
+    <!-- DataGrid Column Headers -->
+    <sys:String x:Key="ColEmulator">Emulator</sys:String>
+    <sys:String x:Key="ColInstalledFolder">Install Path</sys:String>
+    <sys:String x:Key="ColLatestRelease">Latest Release (Date)</sys:String>
+    <sys:String x:Key="ColInstalledVersion">Installed Version</sys:String>
+    <sys:String x:Key="ColStatus">Status</sys:String>
+    <sys:String x:Key="ColActions">Actions</sys:String>
+
+    <!-- Status Badges -->
+    <sys:String x:Key="StatusUpToDate">Up to date</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">Update Available</sys:String>
+    <sys:String x:Key="StatusChecking">Checking...</sys:String>
+    <sys:String x:Key="StatusDownloading">Downloading...</sys:String>
+    <sys:String x:Key="StatusExtracting">Extracting...</sys:String>
+    <sys:String x:Key="StatusNotInstalled">Not Installed</sys:String>
+
+    <!-- DataGrid Action Buttons -->
+    <sys:String x:Key="BtnCheckUpdate">Check</sys:String>
+    <sys:String x:Key="BtnUpdateNow">Update</sys:String>
+    <sys:String x:Key="BtnOpenFolder">Open Folder</sys:String>
+
+    <!-- Context Menu Items -->
+    <sys:String x:Key="MenuCheckUpdate">⚡ Check Update</sys:String>
+    <sys:String x:Key="MenuForceDownload">📥 Force Download (Overwrite)</sys:String>
+    <sys:String x:Key="MenuOpenFolder">📁 Open Install Folder</sys:String>
+    <sys:String x:Key="MenuEditPattern">🔍 Edit Asset Regex Pattern</sys:String>
+
+    <!-- Subfolder Manager Window -->
+    <sys:String x:Key="SubfolderWindowTitle">Version Subfolder Manager</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 Version Subfolder Management</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">Manage and clean up previous and current version subfolders stored inside the emulator directory.</sys:String>
+    <sys:String x:Key="SubfolderColName">Folder Name</sys:String>
+    <sys:String x:Key="SubfolderColDate">Created Date</sys:String>
+    <sys:String x:Key="SubfolderColSize">Size</sys:String>
+    <sys:String x:Key="SubfolderColStatus">Version Status</sys:String>
+    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ Delete Selected</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">🔄 Refresh</sys:String>
+    <sys:String x:Key="SubfolderBtnClose">Close</sys:String>
+    <sys:String x:Key="SubfolderBadgeCurrent">📌 Currently Active</sys:String>
+    <sys:String x:Key="SubfolderBadgeOld">📦 Older Version</sys:String>
+
+    <!-- Messages & Dialogs -->
+    <sys:String x:Key="MsgConfirmDeleteSubfolder">Are you sure you want to delete the selected {0} folder(s)?&#10;This action cannot be undone.</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">Selected folder(s) deleted successfully.</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">Please select one or more folders to delete.</sys:String>
+    <sys:String x:Key="MsgEditPatternPrompt">Enter asset matching Regex pattern for [{0}]:</sys:String>
+    <sys:String x:Key="MsgEditPatternTitle">Edit Asset Regex Pattern</sys:String>
+    <sys:String x:Key="MsgUpdateSelfSuccess">Application has been updated to the latest version.</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">Downloading app update ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">Update files ready. Restarting application automatically...</sys:String>
+    <sys:String x:Key="MsgReady">Ready</sys:String>
+</ResourceDictionary>

@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Header & Subtitles -->
+    <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
+    <sys:String x:Key="AppSubtitle">模拟器集成自动更新 &amp; 超高速并行下载器</sys:String>
+    <sys:String x:Key="AppUpdateAvailableBadge">⚡ 发现新版本 {0} 可用 - [立即更新]</sys:String>
+    
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">🔍 检查全部更新</sys:String>
+    <sys:String x:Key="BtnCancelOperation">🛑 取消</sys:String>
+    <sys:String x:Key="BtnSubfolderManager">📁 子文件夹管理</sys:String>
+    <sys:String x:Key="LabelLanguage">🌐 语言 / Language:</sys:String>
+
+    <!-- Global Options -->
+    <sys:String x:Key="OptCheckAllOnStartup">启动时自动检查所有模拟器更新</sys:String>
+    <sys:String x:Key="OptUseVersionSubfolders">更新时创建按版本划分的子文件夹（独立运行）</sys:String>
+
+    <!-- DataGrid Column Headers -->
+    <sys:String x:Key="ColEmulator">模拟器</sys:String>
+    <sys:String x:Key="ColInstalledFolder">安装路径</sys:String>
+    <sys:String x:Key="ColLatestRelease">最新版本 (发布日期)</sys:String>
+    <sys:String x:Key="ColInstalledVersion">已安装版本</sys:String>
+    <sys:String x:Key="ColStatus">状态</sys:String>
+    <sys:String x:Key="ColActions">操作</sys:String>
+
+    <!-- Status Badges -->
+    <sys:String x:Key="StatusUpToDate">已是最新版本</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">有新版本</sys:String>
+    <sys:String x:Key="StatusChecking">检查中...</sys:String>
+    <sys:String x:Key="StatusDownloading">下载中...</sys:String>
+    <sys:String x:Key="StatusExtracting">解压中...</sys:String>
+    <sys:String x:Key="StatusNotInstalled">未安装</sys:String>
+
+    <!-- DataGrid Action Buttons -->
+    <sys:String x:Key="BtnCheckUpdate">检查</sys:String>
+    <sys:String x:Key="BtnUpdateNow">更新</sys:String>
+    <sys:String x:Key="BtnOpenFolder">打开文件夹</sys:String>
+
+    <!-- Context Menu Items -->
+    <sys:String x:Key="MenuCheckUpdate">⚡ 检查更新</sys:String>
+    <sys:String x:Key="MenuForceDownload">📥 强制下载 (无条件覆盖)</sys:String>
+    <sys:String x:Key="MenuOpenFolder">📁 打开安装文件夹</sys:String>
+    <sys:String x:Key="MenuEditPattern">🔍 编辑 Asset 正则表达式</sys:String>
+
+    <!-- Subfolder Manager Window -->
+    <sys:String x:Key="SubfolderWindowTitle">版本子文件夹管理器</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 版本子文件夹管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">查看并清理模拟器安装路径下保存的旧版本/新版本独立文件夹。</sys:String>
+    <sys:String x:Key="SubfolderColName">文件夹名称</sys:String>
+    <sys:String x:Key="SubfolderColDate">创建时间</sys:String>
+    <sys:String x:Key="SubfolderColSize">大小</sys:String>
+    <sys:String x:Key="SubfolderColStatus">版本状态</sys:String>
+    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 删除所选文件夹</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">🔄 刷新</sys:String>
+    <sys:String x:Key="SubfolderBtnClose">关闭</sys:String>
+    <sys:String x:Key="SubfolderBadgeCurrent">📌 当前使用中</sys:String>
+    <sys:String x:Key="SubfolderBadgeOld">📦 旧版本</sys:String>
+
+    <!-- Messages & Dialogs -->
+    <sys:String x:Key="MsgConfirmDeleteSubfolder">确定要删除选中的 {0} 个文件夹吗？&#10;此操作无法撤销。</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">所选文件夹已成功删除。</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">请至少选择一个要删除的文件夹。</sys:String>
+    <sys:String x:Key="MsgEditPatternPrompt">请输入 [{0}] 的 Asset 匹配正则表达式:</sys:String>
+    <sys:String x:Key="MsgEditPatternTitle">编辑 Asset 正则表达式</sys:String>
+    <sys:String x:Key="MsgUpdateSelfSuccess">程序已更新至最新版本。</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">正在下载程序更新 ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">更新文件准备就绪，程序即将自动重启...</sys:String>
+    <sys:String x:Key="MsgReady">就绪</sys:String>
+</ResourceDictionary>

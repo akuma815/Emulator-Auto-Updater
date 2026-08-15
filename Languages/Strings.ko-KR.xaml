@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Header & Subtitles -->
+    <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
+    <sys:String x:Key="AppSubtitle">에뮬레이터 통합 자동 업데이트 &amp; 초고속 병렬 다운로더</sys:String>
+    <sys:String x:Key="AppUpdateAvailableBadge">⚡ 프로그램 새 버전 {0} 사용 가능 - [업데이트]</sys:String>
+    
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">🔍 전체 업데이트 확인</sys:String>
+    <sys:String x:Key="BtnCancelOperation">🛑 취소</sys:String>
+    <sys:String x:Key="BtnSubfolderManager">📁 하위 폴더 관리</sys:String>
+    <sys:String x:Key="LabelLanguage">🌐 언어 / Language:</sys:String>
+
+    <!-- Global Options -->
+    <sys:String x:Key="OptCheckAllOnStartup">프로그램 시작 시 전체 자동 업데이트 확인</sys:String>
+    <sys:String x:Key="OptUseVersionSubfolders">업데이트 시 버전별 하위 폴더 생성 (독립 구동)</sys:String>
+
+    <!-- DataGrid Column Headers -->
+    <sys:String x:Key="ColEmulator">에뮬레이터</sys:String>
+    <sys:String x:Key="ColInstalledFolder">설치 경로</sys:String>
+    <sys:String x:Key="ColLatestRelease">최신 릴리즈 (게시일)</sys:String>
+    <sys:String x:Key="ColInstalledVersion">설치된 버전</sys:String>
+    <sys:String x:Key="ColStatus">상태</sys:String>
+    <sys:String x:Key="ColActions">작업</sys:String>
+
+    <!-- Status Badges -->
+    <sys:String x:Key="StatusUpToDate">최신 버전</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">업데이트 가능</sys:String>
+    <sys:String x:Key="StatusChecking">확인 중...</sys:String>
+    <sys:String x:Key="StatusDownloading">다운로드 중...</sys:String>
+    <sys:String x:Key="StatusExtracting">압축 해제 중...</sys:String>
+    <sys:String x:Key="StatusNotInstalled">미설치</sys:String>
+
+    <!-- DataGrid Action Buttons -->
+    <sys:String x:Key="BtnCheckUpdate">확인</sys:String>
+    <sys:String x:Key="BtnUpdateNow">업데이트</sys:String>
+    <sys:String x:Key="BtnOpenFolder">폴더 열기</sys:String>
+
+    <!-- Context Menu Items -->
+    <sys:String x:Key="MenuCheckUpdate">⚡ 업데이트 확인</sys:String>
+    <sys:String x:Key="MenuForceDownload">📥 강제 다운로드 (무조건 덮어쓰기)</sys:String>
+    <sys:String x:Key="MenuOpenFolder">📁 설치 폴더 열기</sys:String>
+    <sys:String x:Key="MenuEditPattern">🔍 에셋 패턴 regex 편집</sys:String>
+
+    <!-- Subfolder Manager Window -->
+    <sys:String x:Key="SubfolderWindowTitle">하위 버전 폴더 관리자</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 하위 버전 폴더 관리</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">에뮬레이터 설치 경로 하위에 보관된 구버전/신버전 개별 폴더를 확인하고 정리합니다.</sys:String>
+    <sys:String x:Key="SubfolderColName">폴더명</sys:String>
+    <sys:String x:Key="SubfolderColDate">생성 일시</sys:String>
+    <sys:String x:Key="SubfolderColSize">용량</sys:String>
+    <sys:String x:Key="SubfolderColStatus">버전 상태</sys:String>
+    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 선택 폴더 삭제</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">🔄 새로고침</sys:String>
+    <sys:String x:Key="SubfolderBtnClose">닫기</sys:String>
+    <sys:String x:Key="SubfolderBadgeCurrent">📌 현재 사용 중</sys:String>
+    <sys:String x:Key="SubfolderBadgeOld">📦 구버전</sys:String>
+
+    <!-- Messages & Dialogs -->
+    <sys:String x:Key="MsgConfirmDeleteSubfolder">다음 선택된 {0}개 폴더를 정말로 삭제하시겠습니까?&#10;이 작업은 되돌릴 수 없습니다.</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">선택한 폴더가 성공적으로 삭제되었습니다.</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">삭제할 폴더를 하나 이상 선택해주세요.</sys:String>
+    <sys:String x:Key="MsgEditPatternPrompt">[{0}] 에뮬레이터의 자동 업데이트 탐색 regex 에셋 패턴을 입력하세요:</sys:String>
+    <sys:String x:Key="MsgEditPatternTitle">에셋 패턴 Regex 편집</sys:String>
+    <sys:String x:Key="MsgUpdateSelfSuccess">프로그램이 최신 버전으로 업데이트되었습니다.</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">프로그램 업데이트 다운로드 중 ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">업데이트 파일 준비 완료. 프로그램을 자동 재기동합니다...</sys:String>
+    <sys:String x:Key="MsgReady">준비 완료</sys:String>
+</ResourceDictionary>

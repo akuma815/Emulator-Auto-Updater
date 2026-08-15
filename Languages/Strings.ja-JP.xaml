@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Header & Subtitles -->
+    <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
+    <sys:String x:Key="AppSubtitle">エミュレータ統合自動アップデータ ＆ 高速並列ダウンローダー</sys:String>
+    <sys:String x:Key="AppUpdateAvailableBadge">⚡ アプリの新しいバージョン {0} が利用可能です - [更新]</sys:String>
+    
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">🔍 すべて更新確認</sys:String>
+    <sys:String x:Key="BtnCancelOperation">🛑 キャンセル</sys:String>
+    <sys:String x:Key="BtnSubfolderManager">📁 サブフォルダ管理</sys:String>
+    <sys:String x:Key="LabelLanguage">🌐 言語 / Language:</sys:String>
+
+    <!-- Global Options -->
+    <sys:String x:Key="OptCheckAllOnStartup">起動時にすべての更新を自動確認する</sys:String>
+    <sys:String x:Key="OptUseVersionSubfolders">アップデート時にバージョン別サブフォルダを作成する（独立実行）</sys:String>
+
+    <!-- DataGrid Column Headers -->
+    <sys:String x:Key="ColEmulator">エミュレータ</sys:String>
+    <sys:String x:Key="ColInstalledFolder">インストールパス</sys:String>
+    <sys:String x:Key="ColLatestRelease">最新リリース (公開日時)</sys:String>
+    <sys:String x:Key="ColInstalledVersion">インストール済みバージョン</sys:String>
+    <sys:String x:Key="ColStatus">ステータス</sys:String>
+    <sys:String x:Key="ColActions">操作</sys:String>
+
+    <!-- Status Badges -->
+    <sys:String x:Key="StatusUpToDate">最新バージョン</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">更新可能</sys:String>
+    <sys:String x:Key="StatusChecking">確認中...</sys:String>
+    <sys:String x:Key="StatusDownloading">ダウンロード中...</sys:String>
+    <sys:String x:Key="StatusExtracting">解凍中...</sys:String>
+    <sys:String x:Key="StatusNotInstalled">未インストール</sys:String>
+
+    <!-- DataGrid Action Buttons -->
+    <sys:String x:Key="BtnCheckUpdate">確認</sys:String>
+    <sys:String x:Key="BtnUpdateNow">アップデート</sys:String>
+    <sys:String x:Key="BtnOpenFolder">フォルダを開く</sys:String>
+
+    <!-- Context Menu Items -->
+    <sys:String x:Key="MenuCheckUpdate">⚡ 更新確認</sys:String>
+    <sys:String x:Key="MenuForceDownload">📥 強制ダウンロード (上書き)</sys:String>
+    <sys:String x:Key="MenuOpenFolder">📁 インストールフォルダを開く</sys:String>
+    <sys:String x:Key="MenuEditPattern">🔍 アセット正規表現パターンの編集</sys:String>
+
+    <!-- Subfolder Manager Window -->
+    <sys:String x:Key="SubfolderWindowTitle">バージョンサブフォルダ管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 バージョンサブフォルダの管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">エミュレータフォルダ内に保管されている旧バージョン／新バージョンのサブフォルダを確認・整理します。</sys:String>
+    <sys:String x:Key="SubfolderColName">フォルダ名</sys:String>
+    <sys:String x:Key="SubfolderColDate">作成日時</sys:String>
+    <sys:String x:Key="SubfolderColSize">サイズ</sys:String>
+    <sys:String x:Key="SubfolderColStatus">バージョン状態</sys:String>
+    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 選択したフォルダを削除</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">🔄 再読み込み</sys:String>
+    <sys:String x:Key="SubfolderBtnClose">閉じる</sys:String>
+    <sys:String x:Key="SubfolderBadgeCurrent">📌 現在使用中</sys:String>
+    <sys:String x:Key="SubfolderBadgeOld">📦 旧バージョン</sys:String>
+
+    <!-- Messages & Dialogs -->
+    <sys:String x:Key="MsgConfirmDeleteSubfolder">選択された {0} 個のフォルダを削除してもよろしいですか？&#10;この操作は取り消せません。</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">選択したフォルダが正常に削除されました。</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">削除するフォルダを1つ以上選択してください。</sys:String>
+    <sys:String x:Key="MsgEditPatternPrompt">[{0}] のアセットマッチング正規表現パターンを入力してください:</sys:String>
+    <sys:String x:Key="MsgEditPatternTitle">アセット正規表現パターンの編集</sys:String>
+    <sys:String x:Key="MsgUpdateSelfSuccess">プログラムが最新バージョンに更新されました。</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">プログラムの更新をダウンロード中 ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">更新ファイルの準備が完了しました。自動的に再起動します...</sys:String>
+    <sys:String x:Key="MsgReady">準備完了</sys:String>
+</ResourceDictionary>

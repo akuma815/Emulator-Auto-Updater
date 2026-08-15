@@ -8,6 +8,7 @@ public sealed class AppSettings
 
     public bool CheckAllUpdatesOnStartup { get; set; } = true;
     public bool UseVersionSubfolders { get; set; } = false;
+    public string LanguageCode { get; set; } = "ko-KR";
     public string DefaultAssetPattern { get; set; } = DefaultAssetPatternValue;
     public WindowPlacementSettings? WindowPlacement { get; set; }
     public List<double> EmulatorGridColumnWidths { get; set; } = [];

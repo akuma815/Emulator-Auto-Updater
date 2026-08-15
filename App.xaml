@@ -3,7 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Base Control Colors & Brushes -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Languages/Strings.ko-KR.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Base Control Colors & Brushes -->
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
         <SolidColorBrush x:Key="CardBorderBrush" Color="#E2E8F0" />
         <SolidColorBrush x:Key="PrimaryTextBrush" Color="#0F172A" />
@@ -161,5 +166,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
