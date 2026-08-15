@@ -1279,38 +1279,7 @@ public sealed class GitHubReleaseService
     {
         var candidates = new List<GitHubReleaseResponse>();
 
-        // 1. Query /repos/{owner}/{repo}/releases/latest (Official Latest Stable Release)
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest");
-            request.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
-            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (response.IsSuccessStatusCode)
-            {
-                await using var latestStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var apiRelease = await JsonSerializer.DeserializeAsync<GitHubReleaseResponse>(latestStream, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }, cancellationToken);
-
-                if (apiRelease != null)
-                {
-                    candidates.Add(apiRelease);
-                }
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            // Fallback to /releases list
-        }
-
-        // 2. Query /repos/{owner}/{repo}/releases list (Includes Prereleases / Nightly Builds like PCSX2 v2.7.x)
+        // 1. Query /repos/{owner}/{repo}/releases list (Includes Prereleases / Nightly Builds like PCSX2 v2.7.x)
         try
         {
             using var listRequest = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases");
@@ -1339,6 +1308,39 @@ public sealed class GitHubReleaseService
         catch
         {
             // Fallback to HTML scraper
+        }
+
+        // 2. Query /repos/{owner}/{repo}/releases/latest (Official Latest Stable Release) as additional candidate
+        if (candidates.Count > 0)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest");
+                request.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+                using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var latestStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    var apiRelease = await JsonSerializer.DeserializeAsync<GitHubReleaseResponse>(latestStream, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }, cancellationToken);
+
+                    if (apiRelease != null && !candidates.Any(c => string.Equals(c.TagName, apiRelease.TagName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        candidates.Add(apiRelease);
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+            }
         }
 
         // 3. Filter candidates by assetPattern (if specified) and select the release with the LATEST PublishedAt date!
@@ -1389,7 +1391,96 @@ public sealed class GitHubReleaseService
 
     private async Task<GitHubRelease?> GetLatestGitHubReleaseFromHtmlAsync(RepositoryInfo info, string? assetPattern, CancellationToken cancellationToken)
     {
-        // 1. Try GET https://github.com/{owner}/{repo}/releases/latest with HTTP redirect
+        Regex? patternRegex = null;
+        if (!string.IsNullOrWhiteSpace(assetPattern))
+        {
+            try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
+        }
+
+        // 1. Primary: Scrape https://github.com/{owner}/{repo}/releases (Contains all latest releases & prereleases in chronological order)
+        try
+        {
+            var htmlUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases";
+            using var request = new HttpRequestMessage(HttpMethod.Get, htmlUrl);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                var tagMatches = Regex.Matches(html, $@"{info.Owner}/{info.Repo}/releases/tag/(?<tag>[^""'/\s?#]+)", RegexOptions.IgnoreCase);
+                var timeMatches = Regex.Matches(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
+
+                if (tagMatches.Count > 0)
+                {
+                    var seenTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    var releaseEntries = new List<(string Tag, DateTimeOffset Date)>();
+
+                    int timeIdx = 0;
+                    foreach (Match m in tagMatches)
+                    {
+                        var tag = WebUtility.HtmlDecode(m.Groups["tag"].Value);
+                        if (seenTags.Add(tag))
+                        {
+                            var releaseDate = DateTimeOffset.MinValue;
+                            if (timeIdx < timeMatches.Count &&
+                                DateTimeOffset.TryParse(timeMatches[timeIdx].Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedDate))
+                            {
+                                releaseDate = parsedDate;
+                            }
+                            timeIdx++;
+                            releaseEntries.Add((tag, releaseDate));
+                        }
+                    }
+
+                    GitHubRelease? fallbackRelease = null;
+
+                    foreach (var (tagName, releaseDate) in releaseEntries)
+                    {
+                        var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
+                        var candidateRelease = new GitHubRelease
+                        {
+                            TagName = tagName,
+                            Name = $"Release {tagName}",
+                            Body = $"GitHub Release {tagName} (웹 파싱 - 릴리즈 페이지).",
+                            PublishedAt = releaseDate > DateTimeOffset.MinValue ? releaseDate.ToLocalTime() : DateTimeOffset.MinValue,
+                            FetchSource = "웹 파싱 (릴리즈 페이지)",
+                            Assets = assets
+                        };
+
+                        fallbackRelease ??= candidateRelease;
+
+                        if (patternRegex != null)
+                        {
+                            if (assets.Any(a => patternRegex.IsMatch(a.Name)))
+                            {
+                                return candidateRelease;
+                            }
+                        }
+                        else if (assets.Count > 0)
+                        {
+                            return candidateRelease;
+                        }
+                    }
+
+                    if (fallbackRelease != null)
+                    {
+                        return fallbackRelease;
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            // Fallback to /releases/latest redirect
+        }
+
+        // 2. Secondary fallback: Try GET https://github.com/{owner}/{repo}/releases/latest with HTTP redirect
         try
         {
             var latestUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases/latest";
@@ -1418,32 +1509,16 @@ public sealed class GitHubReleaseService
                 if (!string.IsNullOrWhiteSpace(tagName))
                 {
                     var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
-
-                    // Check if latest release contains assets matching assetPattern
-                    bool isMatched = true;
-                    if (!string.IsNullOrWhiteSpace(assetPattern))
+                    var parsedDate = ParseHtmlPublishedDate(html);
+                    return new GitHubRelease
                     {
-                        try
-                        {
-                            var regex = new Regex(assetPattern, RegexOptions.IgnoreCase);
-                            isMatched = assets.Any(a => regex.IsMatch(a.Name));
-                        }
-                        catch { }
-                    }
-
-                    if (isMatched)
-                    {
-                        var parsedDate = ParseHtmlPublishedDate(html);
-                        return new GitHubRelease
-                        {
-                            TagName = tagName,
-                            Name = $"Release {tagName}",
-                            Body = $"GitHub Release {tagName} (웹 파싱 - latest 리다이렉트).",
-                            PublishedAt = parsedDate,
-                            FetchSource = "웹 파싱 (latest 리다이렉트)",
-                            Assets = assets
-                        };
-                    }
+                        TagName = tagName,
+                        Name = $"Release {tagName}",
+                        Body = $"GitHub Release {tagName} (웹 파싱 - latest 리다이렉트).",
+                        PublishedAt = parsedDate > DateTimeOffset.MinValue ? parsedDate.ToLocalTime() : DateTimeOffset.MinValue,
+                        FetchSource = "웹 파싱 (latest 리다이렉트)",
+                        Assets = assets
+                    };
                 }
             }
         }
@@ -1453,75 +1528,9 @@ public sealed class GitHubReleaseService
         }
         catch
         {
-            // Fallback to releases page
         }
 
-        // 2. Fallback: Parse recent tags on https://github.com/{owner}/{repo}/releases page to find tag matching assetPattern
-        var htmlUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases";
-        using var request = new HttpRequestMessage(HttpMethod.Get, htmlUrl);
-        request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-
-        try
-        {
-            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var html = await response.Content.ReadAsStringAsync(cancellationToken);
-            var tagMatches = Regex.Matches(html, $@"{info.Owner}/{info.Repo}/releases/tag/(?<tag>[^""'/\s?#]+)", RegexOptions.IgnoreCase);
-            if (tagMatches.Count == 0)
-            {
-                return null;
-            }
-
-            var seenTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            GitHubRelease? fallbackRelease = null;
-
-            Regex? patternRegex = null;
-            if (!string.IsNullOrWhiteSpace(assetPattern))
-            {
-                try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
-            }
-
-            var pagePublishedDate = ParseHtmlPublishedDate(html);
-
-            foreach (Match m in tagMatches)
-            {
-                var tagName = WebUtility.HtmlDecode(m.Groups["tag"].Value);
-                if (!seenTags.Add(tagName)) continue;
-
-                var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
-                var candidateRelease = new GitHubRelease
-                {
-                    TagName = tagName,
-                    Name = $"Release {tagName}",
-                    Body = $"GitHub Release {tagName} (웹 파싱 - 태그 순회).",
-                    PublishedAt = pagePublishedDate,
-                    FetchSource = "웹 파싱 (태그 순회)",
-                    Assets = assets
-                };
-
-                fallbackRelease ??= candidateRelease;
-
-                if (patternRegex != null && assets.Any(a => patternRegex.IsMatch(a.Name)))
-                {
-                    return candidateRelease;
-                }
-            }
-
-            return fallbackRelease;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            return null;
-        }
+        return null;
     }
 
     private static DateTimeOffset ParseHtmlPublishedDate(string html)
