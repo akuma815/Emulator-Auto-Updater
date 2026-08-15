@@ -1243,8 +1243,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     foundAssets.ToList(),
                     latestVersion,
                     release.Body);
-                var installed = emulator.InstalledVersion?.Trim();
-                summary.Add(IsUpToDate(installed, latestVersion)
+                summary.Add(IsUpToDate(emulator, foundAssets.First())
                     ? $"{emulator.Name}: 최신"
                     : $"{emulator.Name}: 업데이트 가능({latestVersion})");
             }
@@ -2561,7 +2560,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    private static bool IsUpToDate(string? installed, string latestVersion)
+    private static bool IsUpToDate(EmulatorConfig emulator, BuildAsset asset)
+    {
+        var installed = emulator.InstalledVersion?.Trim();
+        var latestVersion = asset.Version?.Trim() ?? string.Empty;
+
+        // 1. Version-based comparison
+        if (IsVersionUpToDate(installed, latestVersion))
+        {
+            return true;
+        }
+
+        // 2. Date-based comparison (fallback when no valid version or when installed/latest are dates)
+        if (asset.PublishedAt > DateTimeOffset.MinValue && emulator.LastDownloadedAt.HasValue)
+        {
+            // If the remote published date is <= when it was last downloaded, it is up to date!
+            if (asset.PublishedAt.UtcDateTime <= emulator.LastDownloadedAt.Value.UtcDateTime)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsVersionUpToDate(string? installed, string latestVersion)
     {
         if (string.IsNullOrWhiteSpace(installed) || string.IsNullOrWhiteSpace(latestVersion))
         {
@@ -2593,7 +2616,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return vLatest <= vInst;
         }
 
-        // 4. Revision number comparison (e.g., 1.20.4-830-ge41a16a6b2 vs 1.20.4-835-g123456)
+        // 4. Integer build number comparison (e.g. 4066 vs 4066)
+        if (long.TryParse(instClean, out var lInst) &&
+            long.TryParse(latestClean, out var lLatest))
+        {
+            return lLatest <= lInst;
+        }
+
+        // 5. Revision number comparison (e.g., 1.20.4-721-gc42e41c034)
         var revInstMatch = Regex.Match(instClean, @"-(\d+)-g[0-9a-f]+$", RegexOptions.IgnoreCase);
         var revLatestMatch = Regex.Match(latestClean, @"-(\d+)-g[0-9a-f]+$", RegexOptions.IgnoreCase);
         if (revInstMatch.Success && revLatestMatch.Success &&
@@ -2603,9 +2633,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return revLatest <= revInst;
         }
 
-        // 5. Date / Timestamp comparison (when no explicit version tag exists):
-        //    If latestDate > instDate -> Update Available (latest is strictly newer than installed).
-        //    If latestDate <= instDate -> Up To Date!
+        // 6. Build dash number comparison (e.g., 2606-282 vs 2606-282)
+        var dashInstMatch = Regex.Match(instClean, @"^(\d+)-(\d+)$");
+        var dashLatestMatch = Regex.Match(latestClean, @"^(\d+)-(\d+)$");
+        if (dashInstMatch.Success && dashLatestMatch.Success)
+        {
+            var majorInst = long.Parse(dashInstMatch.Groups[1].Value);
+            var minorInst = long.Parse(dashInstMatch.Groups[2].Value);
+            var majorLatest = long.Parse(dashLatestMatch.Groups[1].Value);
+            var minorLatest = long.Parse(dashLatestMatch.Groups[2].Value);
+
+            if (majorLatest < majorInst) return true;
+            if (majorLatest == majorInst) return minorLatest <= minorInst;
+            return false;
+        }
+
+        // 7. Date / Timestamp comparison (when no explicit version tag exists):
         if (DateTimeOffset.TryParse(inst, out var instDate) &&
             DateTimeOffset.TryParse(latest, out var latestDate))
         {
@@ -2641,7 +2684,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
         }
 
-        var isRootUpToDate = IsUpToDate(installed, asset.Version);
+        var isRootUpToDate = IsUpToDate(emulator, asset);
 
         var targetSubfolderName = GetVersionSubfolderName(asset.Version, asset.PublishedAt);
         var foundSubfolderName = targetSubfolderName;

@@ -1136,7 +1136,7 @@ public sealed class GitHubReleaseService
 
     private static BuildAsset CreateBuildAsset(GitHubAsset asset, string version, DateTimeOffset publishedAt)
     {
-        var localPublishedAt = publishedAt > DateTimeOffset.MinValue ? publishedAt.ToLocalTime() : DateTimeOffset.Now;
+        var localPublishedAt = publishedAt > DateTimeOffset.MinValue ? publishedAt.ToLocalTime() : DateTimeOffset.MinValue;
         var resolvedVersion = ResolveVersion(version, asset.Name, localPublishedAt);
         return new BuildAsset
         {
@@ -1158,12 +1158,16 @@ public sealed class GitHubReleaseService
             cleanRaw = string.Empty;
         }
 
-        if (!IsRealVersionNumber(cleanRaw))
+        if (!IsValidVersionTag(cleanRaw))
         {
-            cleanRaw = ExtractRealVersionNumber(assetName) ?? string.Empty;
+            var extracted = ExtractRealVersionNumber(assetName);
+            if (!string.IsNullOrWhiteSpace(extracted))
+            {
+                cleanRaw = extracted;
+            }
         }
 
-        if (string.IsNullOrWhiteSpace(cleanRaw))
+        if (string.IsNullOrWhiteSpace(cleanRaw) || !IsValidVersionTag(cleanRaw))
         {
             return publishedAt > DateTimeOffset.MinValue
                 ? publishedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
@@ -1173,17 +1177,20 @@ public sealed class GitHubReleaseService
         return cleanRaw;
     }
 
-    private static bool IsRealVersionNumber(string v)
+    public static bool IsValidVersionTag(string? v)
     {
         if (string.IsNullOrWhiteSpace(v)) return false;
 
-        var lower = v.ToLowerInvariant();
-        if (lower is "latest" or "nightly" or "dev" or "canary" or "builds" or "main" or "master" or "release" or "unknown" or "x64" or "win64" or "x86" or "amd64" or "arm64")
+        var clean = v.Trim().TrimStart('v', 'V');
+        if (string.IsNullOrWhiteSpace(clean)) return false;
+
+        var lower = clean.ToLowerInvariant();
+        if (lower is "latest" or "nightly" or "dev" or "canary" or "builds" or "main" or "master" or "release" or "unknown" or "x64" or "win64" or "x86" or "amd64" or "arm64" or "windows")
         {
             return false;
         }
 
-        return Regex.IsMatch(v, @"^\d+([\.-]\d+)+(-\w+)?$");
+        return Regex.IsMatch(clean, @"[0-9a-fA-F]");
     }
 
     private static string? ExtractRealVersionNumber(string assetName)
