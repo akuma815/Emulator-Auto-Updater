@@ -59,6 +59,7 @@
     <sys:String x:Key="BtnDownloadAndExtract">다운로드 + 압축 해제</sys:String>
     <sys:String x:Key="BtnManageSubfolders">📁 하위 폴더 관리</sys:String>
     <sys:String x:Key="LblLatestReleaseVersion">최신 릴리즈 버전:</sys:String>
+    <sys:String x:Key="LblFetchSource">조회 방식</sys:String>
     <sys:String x:Key="TxtNoSelection">선택 항목 없음</sys:String>
     <sys:String x:Key="TxtNone">없음</sys:String>
 
@@ -118,8 +119,11 @@
     <!-- Logs & Messages -->
     <sys:String x:Key="LogLoadingConfig">설정을 불러오는 중입니다...</sys:String>
     <sys:String x:Key="LogConfigLoaded">설정 파일('{0}')을 불러왔습니다.</sys:String>
+    <sys:String x:Key="LogConfigNotFound">설정 파일이 없습니다: {0}</sys:String>
     <sys:String x:Key="LogSavingConfig">설정을 저장하는 중입니다...</sys:String>
     <sys:String x:Key="LogConfigSaved">설정을 저장했습니다: {0}</sys:String>
+    <sys:String x:Key="LogEmulatorSelected">'{0}' 항목을 선택했습니다.</sys:String>
+    <sys:String x:Key="LogSelectEmulator">에뮬레이터를 선택하세요.</sys:String>
     <sys:String x:Key="LogCheckingSingle">[{0}] 업데이트 정보를 확인하는 중입니다...</sys:String>
     <sys:String x:Key="LogCheckSingleSuccess">[{0}] 최신 릴리즈 확인 완료: v{1} (방식: {2})</sys:String>
     <sys:String x:Key="LogCheckProgress">전체 업데이트 확인 중 ({0}/{1}): {2}</sys:String>

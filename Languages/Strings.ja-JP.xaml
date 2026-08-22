@@ -59,6 +59,7 @@
     <sys:String x:Key="BtnDownloadAndExtract">DL＆自動展開</sys:String>
     <sys:String x:Key="BtnManageSubfolders">📁 サブフォルダ管理</sys:String>
     <sys:String x:Key="LblLatestReleaseVersion">最新リリースバージョン:</sys:String>
+    <sys:String x:Key="LblFetchSource">取得方法</sys:String>
     <sys:String x:Key="TxtNoSelection">未選択</sys:String>
     <sys:String x:Key="TxtNone">なし</sys:String>
 
@@ -118,8 +119,11 @@
     <!-- Logs & Messages -->
     <sys:String x:Key="LogLoadingConfig">設定を読み込み中...</sys:String>
     <sys:String x:Key="LogConfigLoaded">設定ファイル ('{0}') を読み込みました。</sys:String>
+    <sys:String x:Key="LogConfigNotFound">設定ファイルが見つかりません: {0}</sys:String>
     <sys:String x:Key="LogSavingConfig">設定を保存中...</sys:String>
     <sys:String x:Key="LogConfigSaved">設定を保存しました: {0}</sys:String>
+    <sys:String x:Key="LogEmulatorSelected">'{0}' を選択しました。</sys:String>
+    <sys:String x:Key="LogSelectEmulator">エミュレータを選択してください。</sys:String>
     <sys:String x:Key="LogCheckingSingle">[{0}] 更新情報を確認中...</sys:String>
     <sys:String x:Key="LogCheckSingleSuccess">[{0}] 最新リリースの確認完了: v{1} (取得方法: {2})</sys:String>
     <sys:String x:Key="LogCheckProgress">全アップデート確認中 ({0}/{1}): {2}</sys:String>

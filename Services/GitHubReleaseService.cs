@@ -1479,9 +1479,9 @@ public sealed class GitHubReleaseService
                         {
                             TagName = tagName,
                             Name = $"Release {tagName}",
-                            Body = $"GitHub Release {tagName} (웹 파싱 - 릴리즈 페이지).",
+                            Body = $"GitHub Release {tagName} (Web Parsing - Release Page).",
                             PublishedAt = releaseDate > DateTimeOffset.MinValue ? releaseDate.ToLocalTime() : DateTimeOffset.MinValue,
-                            FetchSource = "웹 파싱 (릴리즈 페이지)",
+                            FetchSource = "Web (Release Page)",
                             Assets = assets
                         };
 
@@ -1550,9 +1550,9 @@ public sealed class GitHubReleaseService
                     {
                         TagName = tagName,
                         Name = $"Release {tagName}",
-                        Body = $"GitHub Release {tagName} (웹 파싱 - latest 리다이렉트).",
+                        Body = $"GitHub Release {tagName} (Web Parsing - Latest Redirect).",
                         PublishedAt = parsedDate > DateTimeOffset.MinValue ? parsedDate.ToLocalTime() : DateTimeOffset.MinValue,
-                        FetchSource = "웹 파싱 (latest 리다이렉트)",
+                        FetchSource = "Web (Latest Redirect)",
                         Assets = assets
                     };
                 }

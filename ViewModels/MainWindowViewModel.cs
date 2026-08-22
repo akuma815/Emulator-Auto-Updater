@@ -26,7 +26,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly SemaphoreSlim _settingsWriteLock = new(1, 1);
     private string? _customConfigFilePath;
     private string _activityLogText = string.Empty;
-    private string _statusMessage = "설정을 불러오거나 에뮬레이터를 추가하세요.";
+    private string _statusMessage = string.Empty;
     private string _checkAllUpdatesStatusMessage = string.Empty;
     private int _progress;
     private bool _isBusy;
@@ -212,6 +212,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (LocalizationService.CurrentLanguageCode != value)
             {
                 LocalizationService.SetLanguage(value);
+                ActivityLogText = string.Empty;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckAllUpdatesButtonText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DownloadAllUpdatesButtonText)));
@@ -365,14 +366,39 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
         }
 
+        CleanupLegacyAppDataConfig();
+
+        var path = GetConfigFilePath();
+        string? savedLanguageCode = null;
+        if (File.Exists(path))
+        {
+            try
+            {
+                using var stream = File.OpenRead(path);
+                using var doc = await JsonDocument.ParseAsync(stream);
+                if (doc.RootElement.TryGetProperty("LanguageCode", out var langProp) ||
+                    doc.RootElement.TryGetProperty("languageCode", out langProp))
+                {
+                    savedLanguageCode = langProp.GetString();
+                }
+            }
+            catch
+            {
+                // Fallback to default
+            }
+        }
+
+        LocalizationService.Initialize(savedLanguageCode);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckAllUpdatesButtonText)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DownloadAllUpdatesButtonText)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
+
         await ExecuteBusyOperationAsync(async () =>
         {
-            CleanupLegacyAppDataConfig();
-
-            var path = GetConfigFilePath();
             if (!File.Exists(path))
             {
-                StatusMessage = $"설정 파일이 없습니다: {path}";
+                StatusMessage = LocalizationService.GetString("LogConfigNotFound", path);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
                 return;
             }
@@ -388,9 +414,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             DefaultAssetPattern = settings?.DefaultAssetPattern ?? AppSettings.DefaultAssetPatternValue;
             WindowPlacement = settings?.WindowPlacement;
             EmulatorGridColumnWidths = settings?.EmulatorGridColumnWidths ?? [];
-
-            LocalizationService.Initialize(settings?.LanguageCode);
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
 
             Emulators.Clear();
             _updateHistory.Clear();
@@ -802,7 +825,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             var notesHeader = string.IsNullOrWhiteSpace(release.FetchSource)
                 ? string.Empty
-                : $"[조회 방식: {release.FetchSource}]\n\n";
+                : $"[{LocalizationService.GetString("LblFetchSource", "조회 방식")}: {release.FetchSource}]\n\n";
 
             _updateHistory[emulator.Id] = new EmulatorUpdateHistory(
                 foundAssets.ToList(),
@@ -926,7 +949,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                             var notesHeader = string.IsNullOrWhiteSpace(release.FetchSource)
                                 ? string.Empty
-                                : $"[조회 방식: {release.FetchSource}]\n\n";
+                                : $"[{LocalizationService.GetString("LblFetchSource", "조회 방식")}: {release.FetchSource}]\n\n";
 
                             var history = new EmulatorUpdateHistory(
                                 foundAssets.ToList(),
@@ -1073,7 +1096,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                                 asset = foundAssets.First();
                                 var notesHeader = string.IsNullOrWhiteSpace(release.FetchSource)
                                     ? string.Empty
-                                    : $"[조회 방식: {release.FetchSource}]\n\n";
+                                    : $"[{LocalizationService.GetString("LblFetchSource", "조회 방식")}: {release.FetchSource}]\n\n";
 
                                 history = new EmulatorUpdateHistory(
                                     foundAssets.ToList(),
@@ -2972,18 +2995,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (emulator != null && _transferStates.TryGetValue(emulator.Id, out var state))
             {
                 StatusMessage = string.IsNullOrWhiteSpace(state.Status)
-                    ? $"'{emulator.Name}' 항목을 선택했습니다."
+                    ? LocalizationService.GetString("LogEmulatorSelected", emulator.Name)
                     : state.Status;
                 Progress = state.Progress;
             }
             else if (emulator != null)
             {
-                StatusMessage = $"'{emulator.Name}' 항목을 선택했습니다.";
+                StatusMessage = LocalizationService.GetString("LogEmulatorSelected", emulator.Name);
                 Progress = 0;
             }
             else
             {
-                StatusMessage = "에뮬레이터를 선택하세요.";
+                StatusMessage = LocalizationService.GetString("LogSelectEmulator", "에뮬레이터를 선택하세요.");
                 Progress = 0;
             }
         });

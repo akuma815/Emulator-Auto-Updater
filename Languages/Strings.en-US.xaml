@@ -59,6 +59,7 @@
     <sys:String x:Key="BtnDownloadAndExtract">Download &amp; Extract</sys:String>
     <sys:String x:Key="BtnManageSubfolders">📁 Manage Subfolders</sys:String>
     <sys:String x:Key="LblLatestReleaseVersion">Latest Release Version:</sys:String>
+    <sys:String x:Key="LblFetchSource">Source</sys:String>
     <sys:String x:Key="TxtNoSelection">No Selection</sys:String>
     <sys:String x:Key="TxtNone">None</sys:String>
 
@@ -118,8 +119,11 @@
     <!-- Logs & Messages -->
     <sys:String x:Key="LogLoadingConfig">Loading configuration...</sys:String>
     <sys:String x:Key="LogConfigLoaded">Loaded configuration file ('{0}').</sys:String>
+    <sys:String x:Key="LogConfigNotFound">Configuration file not found: {0}</sys:String>
     <sys:String x:Key="LogSavingConfig">Saving configuration...</sys:String>
     <sys:String x:Key="LogConfigSaved">Configuration saved: {0}</sys:String>
+    <sys:String x:Key="LogEmulatorSelected">Selected '{0}'.</sys:String>
+    <sys:String x:Key="LogSelectEmulator">Please select an emulator.</sys:String>
     <sys:String x:Key="LogCheckingSingle">[{0}] Checking for update information...</sys:String>
     <sys:String x:Key="LogCheckSingleSuccess">[{0}] Latest release check completed: v{1} (Source: {2})</sys:String>
     <sys:String x:Key="LogCheckProgress">Checking for updates ({0}/{1}): {2}</sys:String>

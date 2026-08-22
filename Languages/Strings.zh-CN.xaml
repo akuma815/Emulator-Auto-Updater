@@ -59,6 +59,7 @@
     <sys:String x:Key="BtnDownloadAndExtract">下载并解压</sys:String>
     <sys:String x:Key="BtnManageSubfolders">📁 子文件夹管理</sys:String>
     <sys:String x:Key="LblLatestReleaseVersion">最新发布版本:</sys:String>
+    <sys:String x:Key="LblFetchSource">查询方式</sys:String>
     <sys:String x:Key="TxtNoSelection">未选中</sys:String>
     <sys:String x:Key="TxtNone">无</sys:String>
 
@@ -118,8 +119,11 @@
     <!-- Logs & Messages -->
     <sys:String x:Key="LogLoadingConfig">正在加载配置...</sys:String>
     <sys:String x:Key="LogConfigLoaded">已加载配置文件 ('{0}')。</sys:String>
+    <sys:String x:Key="LogConfigNotFound">未找到配置文件: {0}</sys:String>
     <sys:String x:Key="LogSavingConfig">正在保存配置...</sys:String>
     <sys:String x:Key="LogConfigSaved">已保存配置: {0}</sys:String>
+    <sys:String x:Key="LogEmulatorSelected">已选择 '{0}'。</sys:String>
+    <sys:String x:Key="LogSelectEmulator">请选择模拟器。</sys:String>
     <sys:String x:Key="LogCheckingSingle">[{0}] 正在检查更新信息...</sys:String>
     <sys:String x:Key="LogCheckSingleSuccess">[{0}] 最新版本检查完成: v{1} (方式: {2})</sys:String>
     <sys:String x:Key="LogCheckProgress">正在检查更新 ({0}/{1}): {2}</sys:String>
