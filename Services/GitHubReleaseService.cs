@@ -274,6 +274,7 @@ public sealed class GitHubReleaseService
 
         var trimmed = repository.Trim();
         return trimmed.Contains("dolphin-emu.org", StringComparison.OrdinalIgnoreCase) ||
+               trimmed.Contains("dolphin.ci", StringComparison.OrdinalIgnoreCase) ||
                trimmed.Contains("r.jina.ai", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -281,6 +282,14 @@ public sealed class GitHubReleaseService
         string repositoryUrl,
         CancellationToken cancellationToken)
     {
+        // 1. Primary: Try Dolphin CI Buildbot REST API (fast, robust, bypassing CDN challenge)
+        var ciRelease = await GetLatestDolphinCiReleaseAsync(cancellationToken);
+        if (ciRelease != null)
+        {
+            return ciRelease;
+        }
+
+        // 2. Secondary fallback: HTML Web scraping (via Jina Reader or direct / proxies)
         var html = await GetDolphinDownloadPageHtmlAsync(repositoryUrl, cancellationToken);
         if (string.IsNullOrWhiteSpace(html))
         {
@@ -318,6 +327,131 @@ public sealed class GitHubReleaseService
                 }
             }
         };
+    }
+
+    private async Task<GitHubRelease?> GetLatestDolphinCiReleaseAsync(CancellationToken cancellationToken)
+    {
+        var ciEndpoints = new[]
+        {
+            "https://dolphin.ci/api/v2/builders/37/builds?limit=10&order=-buildid&property=build_url&property=shortrev&property=description",
+            "https://dolphin.ci/api/v2/builders/dev-win-x64/builds?limit=10&order=-buildid&property=build_url&property=shortrev&property=description"
+        };
+
+        foreach (var endpoint in ciEndpoints)
+        {
+            try
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(8));
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                if (!response.IsSuccessStatusCode)
+                {
+                    continue;
+                }
+
+                await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, default, cts.Token);
+
+                if (!doc.RootElement.TryGetProperty("builds", out var builds))
+                {
+                    continue;
+                }
+
+                var assets = new List<GitHubAsset>();
+                string? latestVersion = null;
+                string? latestDescription = null;
+                DateTimeOffset latestPublishedAt = DateTimeOffset.MinValue;
+
+                foreach (var b in builds.EnumerateArray())
+                {
+                    var complete = b.TryGetProperty("complete", out var comp) && comp.GetBoolean();
+                    var results = b.TryGetProperty("results", out var resVal) ? resVal.GetInt32() : -1;
+                    if (!complete || results != 0)
+                    {
+                        continue;
+                    }
+
+                    var completeAtSec = b.TryGetProperty("complete_at", out var cat) ? cat.GetInt64() : 0;
+                    var publishedAt = completeAtSec > 0
+                        ? DateTimeOffset.FromUnixTimeSeconds(completeAtSec).ToLocalTime()
+                        : DateTimeOffset.Now;
+
+                    string? buildUrl = null;
+                    string? shortRev = null;
+                    string? description = null;
+
+                    if (b.TryGetProperty("properties", out var props))
+                    {
+                        if (props.TryGetProperty("build_url", out var bUrlArr) && bUrlArr.GetArrayLength() > 0)
+                        {
+                            buildUrl = bUrlArr[0].GetString();
+                        }
+                        if (props.TryGetProperty("shortrev", out var sRevArr) && sRevArr.GetArrayLength() > 0)
+                        {
+                            shortRev = sRevArr[0].GetString();
+                        }
+                        if (props.TryGetProperty("description", out var descArr) && descArr.GetArrayLength() > 0)
+                        {
+                            description = descArr[0].GetString();
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(buildUrl) && !string.IsNullOrWhiteSpace(shortRev))
+                    {
+                        if (Uri.TryCreate(buildUrl, UriKind.Absolute, out var uri))
+                        {
+                            var assetName = Path.GetFileName(uri.LocalPath);
+                            if (!string.IsNullOrWhiteSpace(assetName))
+                            {
+                                if (latestVersion == null)
+                                {
+                                    latestVersion = shortRev;
+                                    latestDescription = description;
+                                    latestPublishedAt = publishedAt;
+                                }
+
+                                if (!assets.Any(a => a.BrowserDownloadUrl == buildUrl))
+                                {
+                                    assets.Add(new GitHubAsset
+                                    {
+                                        Name = assetName,
+                                        BrowserDownloadUrl = buildUrl
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(latestVersion) && assets.Count > 0)
+                {
+                    return new GitHubRelease
+                    {
+                        TagName = latestVersion,
+                        Name = $"Dolphin Development {latestVersion}",
+                        Body = latestDescription ?? $"Latest Dolphin Development Version Windows x64 build ({latestVersion}).",
+                        PublishedAt = latestPublishedAt,
+                        FetchSource = "Dolphin CI",
+                        Assets = assets
+                    };
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Continue to next endpoint or fallback
+            }
+        }
+
+        return null;
     }
 
     private static DateTimeOffset ParseDolphinBuildDate(string content, int buildLinkIndex)
