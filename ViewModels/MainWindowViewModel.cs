@@ -223,6 +223,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     {
                         emu.StatusText = LocalizationService.GetString("StatusUnchecked", "미확인");
                     }
+                    else if (emu.StatusType == "Checking")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusChecking", "확인 중...");
+                    }
+                    else if (emu.StatusType == "Downloading")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusDownloading", "다운로드 중...");
+                    }
+                    else if (emu.StatusType == "Extracting")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusExtracting", "압축 해제 중...");
+                    }
                     else if (emu.StatusType == "UpToDate")
                     {
                         emu.StatusText = LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)");
@@ -234,6 +246,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     else if (emu.StatusType == "CheckFailed")
                     {
                         emu.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
+                    }
+                    else if (emu.StatusType == "NoMatch")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusNoMatch", "조건 맞는 파일 없음");
                     }
                 }
 
@@ -744,7 +760,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Progress = 0;
         }
 
-        emulator.StatusText = "확인 중...";
+        emulator.StatusText = LocalizationService.GetString("StatusChecking", "확인 중...");
         emulator.StatusType = "Checking";
 
         try
@@ -760,7 +776,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var release = await _releaseService.GetLatestReleaseAsync(emulator.Repository, emulator.AssetPattern, CancellationToken.None);
             if (release == null)
             {
-                emulator.StatusText = "조회 실패";
+                emulator.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
                 emulator.StatusType = "CheckFailed";
                 if (ReferenceEquals(SelectedEmulator, emulator))
                 {
@@ -772,8 +788,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var foundAssets = _releaseService.FindAssets(release, emulator.AssetPattern);
             if (foundAssets.Count == 0)
             {
-                emulator.StatusText = "조건 맞는 파일 없음";
-                emulator.StatusType = "CheckFailed";
+                emulator.StatusText = LocalizationService.GetString("StatusNoMatch", "조건 맞는 파일 없음");
+                emulator.StatusType = "NoMatch";
                 if (ReferenceEquals(SelectedEmulator, emulator))
                 {
                     StatusMessage = "지정한 AssetPattern과 맞는 파일을 찾지 못했습니다.";
@@ -803,7 +819,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
             else
             {
-                emulator.StatusText = $"업데이트 가능 ({latestVersion})";
+                emulator.StatusText = LocalizationService.GetString("StatusUpdateAvailable", latestVersion);
                 emulator.StatusType = "UpdateAvailable";
             }
 
@@ -818,7 +834,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            emulator.StatusText = "조회 실패";
+            emulator.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
             emulator.StatusType = "CheckFailed";
             await LogErrorAsync(ex);
             if (ReferenceEquals(SelectedEmulator, emulator))
@@ -879,7 +895,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     ct.ThrowIfCancellationRequested();
                     var emulator = emulators[index];
 
-                    emulator.StatusText = "확인 중...";
+                    emulator.StatusText = LocalizationService.GetString("StatusChecking", "확인 중...");
                     emulator.StatusType = "Checking";
 
                     var release = await _releaseService.GetLatestReleaseAsync(
@@ -890,7 +906,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                     if (release == null)
                     {
-                        emulator.StatusText = "조회 실패";
+                        emulator.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
                         emulator.StatusType = "CheckFailed";
                         results[index] = ($"{emulator.Name}: 릴리즈 조회 실패", null);
                     }
@@ -899,8 +915,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                         var foundAssets = _releaseService.FindAssets(release, emulator.AssetPattern);
                         if (foundAssets.Count == 0)
                         {
-                            emulator.StatusText = "조건 맞는 파일 없음";
-                            emulator.StatusType = "CheckFailed";
+                            emulator.StatusText = LocalizationService.GetString("StatusNoMatch", "조건 맞는 파일 없음");
+                            emulator.StatusType = "NoMatch";
                             results[index] = ($"{emulator.Name}: 조건에 맞는 파일 없음 ({release.FetchSource})", null);
                         }
                         else
@@ -927,7 +943,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                             }
                             else
                             {
-                                emulator.StatusText = $"업데이트 가능 ({latestVersion})";
+                                emulator.StatusText = LocalizationService.GetString("StatusUpdateAvailable", latestVersion);
                                 emulator.StatusType = "UpdateAvailable";
                                 summaryMsg = $"{emulator.Name}: 업데이트 가능 ({latestVersion}) (방식: {release.FetchSource})";
                             }
@@ -1374,7 +1390,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
         }
 
-        emulator.StatusText = "다운로드 중...";
+        emulator.StatusText = LocalizationService.GetString("StatusDownloading", "다운로드 중...");
         emulator.StatusType = "Downloading";
         ReportTransfer(emulator, "다운로드를 시작합니다...", 0);
         UpdateCommandStates();
@@ -1563,7 +1579,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         bool isZip)
     {
         var fileName = Path.GetFileName(archivePath);
-        emulator.StatusText = "압축 해제 중...";
+        emulator.StatusText = LocalizationService.GetString("StatusExtracting", "압축 해제 중...");
         emulator.StatusType = "Extracting";
         ReportTransfer(emulator, $"압축 해제 시작: {fileName}", 95);
 
