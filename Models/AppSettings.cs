@@ -2,7 +2,7 @@ namespace EmulatorAutoUpdater.Models;
 
 public sealed class AppSettings
 {
-    public const string CurrentAppVersion = "1.2.0";
+    public const string CurrentAppVersion = "1.3.0";
     public const string AppUpdateRepository = "akuma815/Emulator-Auto-Updater";
     public const string DefaultAssetPatternValue = @"(?i)(win|windows).*(x64|amd64).*\.(zip|7z)$";
 
