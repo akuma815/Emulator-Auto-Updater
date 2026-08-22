@@ -3,68 +3,119 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- Header & Subtitles -->
     <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
-    <sys:String x:Key="AppSubtitle">エミュレータ統合自動アップデータ ＆ 高速並列ダウンローダー</sys:String>
-    <sys:String x:Key="AppUpdateAvailableBadge">⚡ アプリの新しいバージョン {0} が利用可能です - [更新]</sys:String>
-    
-    <!-- Top Action Buttons -->
-    <sys:String x:Key="BtnCheckAllUpdates">🔍 すべて更新確認</sys:String>
-    <sys:String x:Key="BtnCancelOperation">🛑 キャンセル</sys:String>
-    <sys:String x:Key="BtnSubfolderManager">📁 サブフォルダ管理</sys:String>
+    <sys:String x:Key="AppSubtitle">エミュレータ統合自動アップデータ＆超高速並列ダウンローダー</sys:String>
+    <sys:String x:Key="AppUpdateAvailableBadge">⚡ 新バージョン {0} が利用可能 - [アップデート]</sys:String>
+    <sys:String x:Key="BtnAppUpdateAvailable">⚡ アプリ更新可能</sys:String>
     <sys:String x:Key="LabelLanguage">🌐 言語 / Language:</sys:String>
 
-    <!-- Global Options -->
-    <sys:String x:Key="OptCheckAllOnStartup">起動時にすべての更新を自動確認する</sys:String>
-    <sys:String x:Key="OptUseVersionSubfolders">アップデート時にバージョン別サブフォルダを作成する（独立実行）</sys:String>
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">全アップデート確認</sys:String>
+    <sys:String x:Key="BtnDownloadAllUpdates">一括ダウンロード</sys:String>
+    <sys:String x:Key="BtnCancelOperation">キャンセル</sys:String>
+    <sys:String x:Key="BtnCancelCheck">確認中止</sys:String>
+    <sys:String x:Key="BtnCancelDownload">ダウンロード中止</sys:String>
+    <sys:String x:Key="TipCheckAllUpdates">リスト内の全エミュレータのアップデートを最大10並列で確認します。</sys:String>
+    <sys:String x:Key="TipDownloadAllUpdates">全アップデートを確認後、最新ビルドを自動で並列ダウンロード・展開します。</sys:String>
 
-    <!-- DataGrid Column Headers -->
-    <sys:String x:Key="ColEmulator">エミュレータ</sys:String>
-    <sys:String x:Key="ColInstalledFolder">インストールパス</sys:String>
-    <sys:String x:Key="ColLatestRelease">最新リリース (公開日時)</sys:String>
-    <sys:String x:Key="ColInstalledVersion">インストール済みバージョン</sys:String>
-    <sys:String x:Key="ColStatus">ステータス</sys:String>
-    <sys:String x:Key="ColActions">操作</sys:String>
+    <!-- Action Toolbar Row 0 & 1 -->
+    <sys:String x:Key="LblEmulatorGroup">エミュレータ:</sys:String>
+    <sys:String x:Key="BtnAddEmulator">+ エミュレータ追加</sys:String>
+    <sys:String x:Key="BtnDeleteSelected">選択削除</sys:String>
+    <sys:String x:Key="LblConfigFileGroup">設定ファイル:</sys:String>
+    <sys:String x:Key="BtnLoadSettings">設定読込</sys:String>
+    <sys:String x:Key="BtnSaveSettings">設定保存</sys:String>
+    <sys:String x:Key="BtnOpenConfigFile">設定ファイルを開く...</sys:String>
+    <sys:String x:Key="BtnSaveConfigFileAs">名前を付けて保存...</sys:String>
+    <sys:String x:Key="ChkCheckAllOnStartup">起動時に全アップデートを確認</sys:String>
+    <sys:String x:Key="ChkUseVersionSubfolders">バージョン/日付ごとのサブフォルダに保存</sys:String>
+    <sys:String x:Key="TipUseVersionSubfolders">インストールフォルダ内にバージョン名（または日付）のサブフォルダを作成して保存します。</sys:String>
+    <sys:String x:Key="LblDefaultAssetPattern">既定のアセットパターン:</sys:String>
+    <sys:String x:Key="BtnConvertPattern">パターン変換</sys:String>
+    <sys:String x:Key="TipConvertDefaultPattern">入力されたファイル名を正規表現パターンに自動変換します。</sys:String>
 
-    <!-- Status Badges -->
-    <sys:String x:Key="StatusUpToDate">最新バージョン</sys:String>
-    <sys:String x:Key="StatusUpdateAvailable">更新可能</sys:String>
+    <!-- Left Pane: Emulator List DataGrid -->
+    <sys:String x:Key="HeaderEmulatorList">📋 登録済みエミュレータ一覧</sys:String>
+    <sys:String x:Key="ColEmulatorName">エミュレータ名</sys:String>
+    <sys:String x:Key="ColStatus">状態</sys:String>
+    <sys:String x:Key="ColRepository">リポジトリ / URL</sys:String>
+    <sys:String x:Key="ColInstallPath">インストール先パス</sys:String>
+    <sys:String x:Key="ColAssetPattern">アセットパターン (正規表現)</sys:String>
+    <sys:String x:Key="MenuManageSubfolders">📁 バージョン別サブフォルダの管理...</sys:String>
+    <sys:String x:Key="TipManageSubfolders">エミュレータのサブフォルダ一覧を表示し、不要なバージョンを削除します。</sys:String>
+
+    <!-- Right Pane: Selected Emulator Details -->
+    <sys:String x:Key="HeaderEmulatorDetail">⚙️ 選択中のエミュレータ情報と操作</sys:String>
+    <sys:String x:Key="LblDetailName">エミュレータ名:</sys:String>
+    <sys:String x:Key="LblDetailRepo">リポジトリ:</sys:String>
+    <sys:String x:Key="LblDetailFolder">インストール先:</sys:String>
+    <sys:String x:Key="BtnBrowseFolder">フォルダ参照</sys:String>
+    <sys:String x:Key="LblDetailPattern">アセットパターン:</sys:String>
+    <sys:String x:Key="BtnAutoConvertPattern">パターン自動変換</sys:String>
+    <sys:String x:Key="TipAutoConvertPattern">入力されたファイル名例を正規表現パターンに自動変換します。</sys:String>
+    <sys:String x:Key="LblDetailInstalledVersion">インストール済み:</sys:String>
+    <sys:String x:Key="LblDetailLastDownloaded">最終ダウンロード:</sys:String>
+    <sys:String x:Key="BtnCheckUpdate">更新確認</sys:String>
+    <sys:String x:Key="BtnDownloadOnly">ダウンロード</sys:String>
+    <sys:String x:Key="BtnDownloadAndExtract">DL＆自動展開</sys:String>
+    <sys:String x:Key="BtnManageSubfolders">📁 サブフォルダ管理</sys:String>
+    <sys:String x:Key="LblLatestReleaseVersion">最新リリースバージョン:</sys:String>
+    <sys:String x:Key="TxtNoSelection">未選択</sys:String>
+    <sys:String x:Key="TxtNone">なし</sys:String>
+
+    <!-- Bottom Left: Downloadable Assets List -->
+    <sys:String x:Key="HeaderDownloadedFiles">📦 検出されたアセット一覧</sys:String>
+    <sys:String x:Key="BtnCopyFileName">📋 ファイル名をコピー</sys:String>
+    <sys:String x:Key="TipCopyFileName">選択したアセットのファイル名をクリップボードにコピーします。</sys:String>
+    <sys:String x:Key="BtnApplyToPattern">🪄 パターンに適用</sys:String>
+    <sys:String x:Key="TipApplyToPattern">選択したファイル名を推奨される正規表現パターンに変換します。</sys:String>
+    <sys:String x:Key="BtnExcludeFromPattern">🚫 パターンから除外</sys:String>
+    <sys:String x:Key="TipExcludeFromPattern">選択した除外対象（symbols, debug等）を解析し、パターンに除外条件を自動追加します。</sys:String>
+    <sys:String x:Key="MenuCopyFileName">📋 ファイル名をコピー</sys:String>
+    <sys:String x:Key="MenuApplyToPattern">🪄 アセットパターンに自動変換して適用</sys:String>
+    <sys:String x:Key="MenuExcludeFromPattern">🚫 パターンに除外条件を追加</sys:String>
+    <sys:String x:Key="ColFileName">ファイル名</sys:String>
+    <sys:String x:Key="ColVersionTag">バージョン Tag</sys:String>
+    <sys:String x:Key="ColPublishDate">公開日時</sys:String>
+
+    <!-- Bottom Right: Activity Log Console -->
+    <sys:String x:Key="HeaderLogConsole">📊 処理状況・ログコンソール</sys:String>
+    <sys:String x:Key="BtnClearLog">ログ消去</sys:String>
+    <sys:String x:Key="LblCurrentConfigFile">設定ファイル:</sys:String>
+
+    <!-- Status Badges & Texts -->
+    <sys:String x:Key="StatusUpToDateRoot">最新 (ルート)</sys:String>
+    <sys:String x:Key="StatusUpToDateSubfolder">最新 ({0})</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">更新可能 ({0})</sys:String>
     <sys:String x:Key="StatusChecking">確認中...</sys:String>
     <sys:String x:Key="StatusDownloading">ダウンロード中...</sys:String>
-    <sys:String x:Key="StatusExtracting">解凍中...</sys:String>
+    <sys:String x:Key="StatusExtracting">展開中...</sys:String>
+    <sys:String x:Key="StatusCheckFailed">確認失敗</sys:String>
+    <sys:String x:Key="StatusUnchecked">未確認</sys:String>
     <sys:String x:Key="StatusNotInstalled">未インストール</sys:String>
 
-    <!-- DataGrid Action Buttons -->
-    <sys:String x:Key="BtnCheckUpdate">確認</sys:String>
-    <sys:String x:Key="BtnUpdateNow">アップデート</sys:String>
-    <sys:String x:Key="BtnOpenFolder">フォルダを開く</sys:String>
-
-    <!-- Context Menu Items -->
-    <sys:String x:Key="MenuCheckUpdate">⚡ 更新確認</sys:String>
-    <sys:String x:Key="MenuForceDownload">📥 強制ダウンロード (上書き)</sys:String>
-    <sys:String x:Key="MenuOpenFolder">📁 インストールフォルダを開く</sys:String>
-    <sys:String x:Key="MenuEditPattern">🔍 アセット正規表現パターンの編集</sys:String>
-
     <!-- Subfolder Manager Window -->
-    <sys:String x:Key="SubfolderWindowTitle">バージョンサブフォルダ管理</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 バージョンサブフォルダの管理</sys:String>
-    <sys:String x:Key="SubfolderHeaderDesc">エミュレータフォルダ内に保管されている旧バージョン／新バージョンのサブフォルダを確認・整理します。</sys:String>
+    <sys:String x:Key="SubfolderWindowTitle">バージョン別サブフォルダ管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 ダウンロード済みバージョンフォルダ管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">エミュレータフォルダ内に保存された各バージョンのフォルダを確認・整理します。</sys:String>
+    <sys:String x:Key="SubfolderRootPath">ルートパス: {0}</sys:String>
+    <sys:String x:Key="SubfolderBtnSelectAll">全選択</sys:String>
+    <sys:String x:Key="SubfolderBtnDeselectAll">全解除</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">再読み込み</sys:String>
+    <sys:String x:Key="SubfolderSelectionSummary">選択中: {0}個のフォルダ ({1})</sys:String>
     <sys:String x:Key="SubfolderColName">フォルダ名</sys:String>
-    <sys:String x:Key="SubfolderColDate">作成日時</sys:String>
+    <sys:String x:Key="SubfolderColExe">実行ファイル (.exe)</sys:String>
     <sys:String x:Key="SubfolderColSize">サイズ</sys:String>
-    <sys:String x:Key="SubfolderColStatus">バージョン状態</sys:String>
-    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 選択したフォルダを削除</sys:String>
-    <sys:String x:Key="SubfolderBtnRefresh">🔄 再読み込み</sys:String>
+    <sys:String x:Key="SubfolderColDate">変更日時</sys:String>
+    <sys:String x:Key="SubfolderStatusInitial">削除するフォルダを選択し、[選択フォルダを削除] をクリックしてください。</sys:String>
+    <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 選択フォルダを削除</sys:String>
     <sys:String x:Key="SubfolderBtnClose">閉じる</sys:String>
-    <sys:String x:Key="SubfolderBadgeCurrent">📌 現在使用中</sys:String>
-    <sys:String x:Key="SubfolderBadgeOld">📦 旧バージョン</sys:String>
 
     <!-- Messages & Dialogs -->
-    <sys:String x:Key="MsgConfirmDeleteSubfolder">選択された {0} 個のフォルダを削除してもよろしいですか？&#10;この操作は取り消せません。</sys:String>
-    <sys:String x:Key="MsgDeleteComplete">選択したフォルダが正常に削除されました。</sys:String>
+    <sys:String x:Key="MsgConfirmDeleteSubfolder">選択された {0} 個のフォルダを本当に削除しますか？&#10;この操作は元に戻せません。</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">選択したフォルダを正常に削除しました。</sys:String>
     <sys:String x:Key="MsgSelectFolderToDelete">削除するフォルダを1つ以上選択してください。</sys:String>
-    <sys:String x:Key="MsgEditPatternPrompt">[{0}] のアセットマッチング正規表現パターンを入力してください:</sys:String>
-    <sys:String x:Key="MsgEditPatternTitle">アセット正規表現パターンの編集</sys:String>
-    <sys:String x:Key="MsgUpdateSelfSuccess">プログラムが最新バージョンに更新されました。</sys:String>
-    <sys:String x:Key="MsgUpdateSelfDownloading">プログラムの更新をダウンロード中 ({0})...</sys:String>
-    <sys:String x:Key="MsgUpdateSelfReady">更新ファイルの準備が完了しました。自動的に再起動します...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfSuccess">アプリが最新バージョンに更新されました。</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">アプリ更新ファイルをダウンロード中 ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">更新ファイルの準備が完了しました。アプリを自動再起動します...</sys:String>
     <sys:String x:Key="MsgReady">準備完了</sys:String>
 </ResourceDictionary>

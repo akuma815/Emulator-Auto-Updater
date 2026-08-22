@@ -43,8 +43,8 @@
         <Border Grid.Row="1" Style="{StaticResource CardPanelStyle}" Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <Button Content="전체 선택" Click="SelectAll_Click" MinWidth="80" Margin="0,0,6,0" Style="{StaticResource SecondaryButtonStyle}" />
-                    <Button Content="전체 해제" Click="DeselectAll_Click" MinWidth="80" Margin="0,0,12,0" Style="{StaticResource SecondaryButtonStyle}" />
+                    <Button Content="{DynamicResource SubfolderBtnSelectAll}" Click="SelectAll_Click" MinWidth="80" Margin="0,0,6,0" Style="{StaticResource SecondaryButtonStyle}" />
+                    <Button Content="{DynamicResource SubfolderBtnDeselectAll}" Click="DeselectAll_Click" MinWidth="80" Margin="0,0,12,0" Style="{StaticResource SecondaryButtonStyle}" />
                     <Button Content="{DynamicResource SubfolderBtnRefresh}" Click="Refresh_Click" MinWidth="80" Style="{StaticResource SecondaryButtonStyle}" />
                 </StackPanel>
 
@@ -81,7 +81,7 @@
                     <DataGridTextColumn Header="{DynamicResource SubfolderColName}" Binding="{Binding FolderName}" Width="1.8*" IsReadOnly="True" />
 
                     <!-- Executable File -->
-                    <DataGridTextColumn Header="실행 파일 (.exe)" Binding="{Binding ExecutableName}" Width="1.3*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="{DynamicResource SubfolderColExe}" Binding="{Binding ExecutableName}" Width="1.3*" IsReadOnly="True" />
 
                     <!-- Size -->
                     <DataGridTextColumn Header="{DynamicResource SubfolderColSize}" Binding="{Binding FormattedSize}" Width="1*" IsReadOnly="True" />
@@ -94,7 +94,7 @@
 
         <!-- 4. Footer Actions -->
         <Grid Grid.Row="3">
-            <TextBlock x:Name="StatusMessageTextBlock" Text="삭제할 폴더를 선택한 후 [선택한 폴더 삭제] 버튼을 누르세요." FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+            <TextBlock x:Name="StatusMessageTextBlock" Text="{DynamicResource SubfolderStatusInitial}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" HorizontalAlignment="Left" />
             
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button x:Name="DeleteSelectedButton" Content="{DynamicResource SubfolderBtnDeleteSelected}" Click="DeleteSelected_Click" Style="{StaticResource DangerButtonStyle}" MinWidth="150" Height="34" Margin="0,0,8,0" />

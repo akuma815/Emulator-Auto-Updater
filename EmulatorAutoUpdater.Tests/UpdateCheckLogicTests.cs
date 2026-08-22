@@ -53,4 +53,20 @@ public class UpdateCheckLogicTests
         var resolved = GitHubReleaseService.ResolveVersion("BizHawk-dev-windows.zip", "BizHawk-dev-windows.zip", date);
         Assert.Equal("2026-07-26 10:16", resolved);
     }
+
+    [Theory]
+    [InlineData("ko-KR", "ko-KR")]
+    [InlineData("ko", "ko-KR")]
+    [InlineData("en-US", "en-US")]
+    [InlineData("en", "en-US")]
+    [InlineData("ja-JP", "ja-JP")]
+    [InlineData("ja", "ja-JP")]
+    [InlineData("zh-CN", "zh-CN")]
+    [InlineData("zh", "zh-CN")]
+    [InlineData("invalid-code", "ko-KR")]
+    public void NormalizeLanguageCode_ReturnsExpectedLanguage(string input, string expected)
+    {
+        var normalized = LocalizationService.NormalizeLanguageCode(input);
+        Assert.Equal(expected, normalized);
+    }
 }

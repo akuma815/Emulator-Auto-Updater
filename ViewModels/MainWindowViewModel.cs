@@ -215,6 +215,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguageCode)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckAllUpdatesButtonText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DownloadAllUpdatesButtonText)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
                 _ = SaveSettingsToDiskAsync();
             }
         }
@@ -230,7 +231,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<double> EmulatorGridColumnWidths { get; private set; } = [];
 
-    public string CurrentConfigFilePath => GetConfigFilePath();
+    public string CurrentConfigFilePath => $"{LocalizationService.GetString("LblCurrentConfigFile", "설정 파일:")} {GetConfigFilePath()}";
 
     public bool IsCheckingAllUpdates
     {
@@ -246,8 +247,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public string CheckAllUpdatesButtonText => IsCheckingAllUpdates
-        ? "확인 취소"
-        : "전체 업데이트 확인";
+        ? LocalizationService.GetString("BtnCancelCheck", "확인 취소")
+        : LocalizationService.GetString("BtnCheckAllUpdates", "전체 업데이트 확인");
 
     public bool IsDownloadingAllUpdates
     {
@@ -263,8 +264,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public string DownloadAllUpdatesButtonText => IsDownloadingAllUpdates
-        ? "다운로드 취소"
-        : "전체 다운로드";
+        ? LocalizationService.GetString("BtnCancelDownload", "다운로드 취소")
+        : LocalizationService.GetString("BtnDownloadAllUpdates", "전체 다운로드");
 
     public EmulatorConfig? SelectedEmulator
     {
@@ -2747,7 +2748,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasRootVersion: true,
                 HasSubfolderVersion: true,
                 SubfolderName: foundSubfolderName,
-                SummaryStatusText: "최신 (루트+하위폴더)",
+                SummaryStatusText: LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)"),
                 DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{foundSubfolderName}')[✓ 최신]");
         }
 
@@ -2758,7 +2759,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasRootVersion: false,
                 HasSubfolderVersion: true,
                 SubfolderName: foundSubfolderName,
-                SummaryStatusText: $"최신 (하위폴더: {foundSubfolderName})",
+                SummaryStatusText: LocalizationService.GetString("StatusUpToDateSubfolder", foundSubfolderName),
                 DetailedLogText: $"루트 폴더[미업데이트] & 하위 폴더('{foundSubfolderName}')[✓ 최신 감지]");
         }
 
@@ -2769,7 +2770,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasRootVersion: true,
                 HasSubfolderVersion: false,
                 SubfolderName: targetSubfolderName,
-                SummaryStatusText: "최신 (루트폴더)",
+                SummaryStatusText: LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)"),
                 DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{targetSubfolderName}')[미존재]");
         }
 
@@ -2778,7 +2779,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             HasRootVersion: false,
             HasSubfolderVersion: false,
             SubfolderName: targetSubfolderName,
-            SummaryStatusText: $"업데이트 가능 ({asset.Version})",
+            SummaryStatusText: LocalizationService.GetString("StatusUpdateAvailable", asset.Version),
             DetailedLogText: $"루트 폴더[업데이트 필요] & 하위 폴더('{targetSubfolderName}')[미존재]");
     }
 

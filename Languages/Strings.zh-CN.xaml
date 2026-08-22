@@ -3,68 +3,119 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- Header & Subtitles -->
     <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
-    <sys:String x:Key="AppSubtitle">模拟器集成自动更新 &amp; 超高速并行下载器</sys:String>
+    <sys:String x:Key="AppSubtitle">模拟器集成自动更新器＆高速多线程下载器</sys:String>
     <sys:String x:Key="AppUpdateAvailableBadge">⚡ 发现新版本 {0} 可用 - [立即更新]</sys:String>
-    
-    <!-- Top Action Buttons -->
-    <sys:String x:Key="BtnCheckAllUpdates">🔍 检查全部更新</sys:String>
-    <sys:String x:Key="BtnCancelOperation">🛑 取消</sys:String>
-    <sys:String x:Key="BtnSubfolderManager">📁 子文件夹管理</sys:String>
+    <sys:String x:Key="BtnAppUpdateAvailable">⚡ 程序可更新</sys:String>
     <sys:String x:Key="LabelLanguage">🌐 语言 / Language:</sys:String>
 
-    <!-- Global Options -->
-    <sys:String x:Key="OptCheckAllOnStartup">启动时自动检查所有模拟器更新</sys:String>
-    <sys:String x:Key="OptUseVersionSubfolders">更新时创建按版本划分的子文件夹（独立运行）</sys:String>
+    <!-- Top Action Buttons -->
+    <sys:String x:Key="BtnCheckAllUpdates">检查全部更新</sys:String>
+    <sys:String x:Key="BtnDownloadAllUpdates">全部下载</sys:String>
+    <sys:String x:Key="BtnCancelOperation">取消</sys:String>
+    <sys:String x:Key="BtnCancelCheck">取消检查</sys:String>
+    <sys:String x:Key="BtnCancelDownload">取消下载</sys:String>
+    <sys:String x:Key="TipCheckAllUpdates">最多支持10个并发检查列表中所有模拟器的最新更新。</sys:String>
+    <sys:String x:Key="TipDownloadAllUpdates">检查更新后并发自动下载并解压所有最新版本。</sys:String>
 
-    <!-- DataGrid Column Headers -->
-    <sys:String x:Key="ColEmulator">模拟器</sys:String>
-    <sys:String x:Key="ColInstalledFolder">安装路径</sys:String>
-    <sys:String x:Key="ColLatestRelease">最新版本 (发布日期)</sys:String>
-    <sys:String x:Key="ColInstalledVersion">已安装版本</sys:String>
+    <!-- Action Toolbar Row 0 & 1 -->
+    <sys:String x:Key="LblEmulatorGroup">模拟器:</sys:String>
+    <sys:String x:Key="BtnAddEmulator">+ 添加模拟器</sys:String>
+    <sys:String x:Key="BtnDeleteSelected">删除所选</sys:String>
+    <sys:String x:Key="LblConfigFileGroup">配置文件:</sys:String>
+    <sys:String x:Key="BtnLoadSettings">加载配置</sys:String>
+    <sys:String x:Key="BtnSaveSettings">保存配置</sys:String>
+    <sys:String x:Key="BtnOpenConfigFile">打开配置文件...</sys:String>
+    <sys:String x:Key="BtnSaveConfigFileAs">另存为...</sys:String>
+    <sys:String x:Key="ChkCheckAllOnStartup">启动时自动检查所有更新</sys:String>
+    <sys:String x:Key="ChkUseVersionSubfolders">保存至版本/日期子文件夹</sys:String>
+    <sys:String x:Key="TipUseVersionSubfolders">在安装目录下以版本号或发布日期创建独立子文件夹存放。</sys:String>
+    <sys:String x:Key="LblDefaultAssetPattern">默认资源匹配模式:</sys:String>
+    <sys:String x:Key="BtnConvertPattern">转换模式</sys:String>
+    <sys:String x:Key="TipConvertDefaultPattern">将输入的示例文件名转换为推荐的正则表达式模式。</sys:String>
+
+    <!-- Left Pane: Emulator List DataGrid -->
+    <sys:String x:Key="HeaderEmulatorList">📋 已注册模拟器列表</sys:String>
+    <sys:String x:Key="ColEmulatorName">模拟器名称</sys:String>
     <sys:String x:Key="ColStatus">状态</sys:String>
-    <sys:String x:Key="ColActions">操作</sys:String>
+    <sys:String x:Key="ColRepository">仓库 / URL</sys:String>
+    <sys:String x:Key="ColInstallPath">安装路径</sys:String>
+    <sys:String x:Key="ColAssetPattern">资源匹配模式 (正则)</sys:String>
+    <sys:String x:Key="MenuManageSubfolders">📁 管理版本子文件夹...</sys:String>
+    <sys:String x:Key="TipManageSubfolders">查看并批量删除该模拟器历史下载的版本子文件夹。</sys:String>
 
-    <!-- Status Badges -->
-    <sys:String x:Key="StatusUpToDate">已是最新版本</sys:String>
-    <sys:String x:Key="StatusUpdateAvailable">有新版本</sys:String>
-    <sys:String x:Key="StatusChecking">检查中...</sys:String>
-    <sys:String x:Key="StatusDownloading">下载中...</sys:String>
-    <sys:String x:Key="StatusExtracting">解压中...</sys:String>
+    <!-- Right Pane: Selected Emulator Details -->
+    <sys:String x:Key="HeaderEmulatorDetail">⚙️ 选中模拟器信息与控制</sys:String>
+    <sys:String x:Key="LblDetailName">模拟器名称:</sys:String>
+    <sys:String x:Key="LblDetailRepo">仓库地址:</sys:String>
+    <sys:String x:Key="LblDetailFolder">安装目录:</sys:String>
+    <sys:String x:Key="BtnBrowseFolder">浏览...</sys:String>
+    <sys:String x:Key="LblDetailPattern">匹配模式:</sys:String>
+    <sys:String x:Key="BtnAutoConvertPattern">自动转换</sys:String>
+    <sys:String x:Key="TipAutoConvertPattern">将输入的示例文件名转换为推荐的正则表达式匹配模式。</sys:String>
+    <sys:String x:Key="LblDetailInstalledVersion">已安装版本:</sys:String>
+    <sys:String x:Key="LblDetailLastDownloaded">最后下载时间:</sys:String>
+    <sys:String x:Key="BtnCheckUpdate">检查更新</sys:String>
+    <sys:String x:Key="BtnDownloadOnly">仅下载</sys:String>
+    <sys:String x:Key="BtnDownloadAndExtract">下载并解压</sys:String>
+    <sys:String x:Key="BtnManageSubfolders">📁 子文件夹管理</sys:String>
+    <sys:String x:Key="LblLatestReleaseVersion">最新发布版本:</sys:String>
+    <sys:String x:Key="TxtNoSelection">未选中</sys:String>
+    <sys:String x:Key="TxtNone">无</sys:String>
+
+    <!-- Bottom Left: Downloadable Assets List -->
+    <sys:String x:Key="HeaderDownloadedFiles">📦 找到的可用下载文件</sys:String>
+    <sys:String x:Key="BtnCopyFileName">📋 复制文件名</sys:String>
+    <sys:String x:Key="TipCopyFileName">复制所选文件名到剪贴板。</sys:String>
+    <sys:String x:Key="BtnApplyToPattern">🪄 应用到匹配模式</sys:String>
+    <sys:String x:Key="TipApplyToPattern">将所选文件名转换为推荐的正则表达式模式。</sys:String>
+    <sys:String x:Key="BtnExcludeFromPattern">🚫 从模式中排除</sys:String>
+    <sys:String x:Key="TipExcludeFromPattern">分析选中的排除文件（如symbols、debug）并在模式中自动追加负向前瞻排除条件。</sys:String>
+    <sys:String x:Key="MenuCopyFileName">📋 复制文件名</sys:String>
+    <sys:String x:Key="MenuApplyToPattern">🪄 自动转换并应用为匹配模式</sys:String>
+    <sys:String x:Key="MenuExcludeFromPattern">🚫 在模式中添加排除条件</sys:String>
+    <sys:String x:Key="ColFileName">文件名</sys:String>
+    <sys:String x:Key="ColVersionTag">版本 Tag</sys:String>
+    <sys:String x:Key="ColPublishDate">发布时间</sys:String>
+
+    <!-- Bottom Right: Activity Log Console -->
+    <sys:String x:Key="HeaderLogConsole">📊 运行状态与日志控制台</sys:String>
+    <sys:String x:Key="BtnClearLog">清空日志</sys:String>
+    <sys:String x:Key="LblCurrentConfigFile">配置文件:</sys:String>
+
+    <!-- Status Badges & Texts -->
+    <sys:String x:Key="StatusUpToDateRoot">最新 (根目录)</sys:String>
+    <sys:String x:Key="StatusUpToDateSubfolder">最新 ({0})</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">可更新 ({0})</sys:String>
+    <sys:String x:Key="StatusChecking">正在检查...</sys:String>
+    <sys:String x:Key="StatusDownloading">正在下载...</sys:String>
+    <sys:String x:Key="StatusExtracting">正在解压...</sys:String>
+    <sys:String x:Key="StatusCheckFailed">检查失败</sys:String>
+    <sys:String x:Key="StatusUnchecked">未检查</sys:String>
     <sys:String x:Key="StatusNotInstalled">未安装</sys:String>
-
-    <!-- DataGrid Action Buttons -->
-    <sys:String x:Key="BtnCheckUpdate">检查</sys:String>
-    <sys:String x:Key="BtnUpdateNow">更新</sys:String>
-    <sys:String x:Key="BtnOpenFolder">打开文件夹</sys:String>
-
-    <!-- Context Menu Items -->
-    <sys:String x:Key="MenuCheckUpdate">⚡ 检查更新</sys:String>
-    <sys:String x:Key="MenuForceDownload">📥 强制下载 (无条件覆盖)</sys:String>
-    <sys:String x:Key="MenuOpenFolder">📁 打开安装文件夹</sys:String>
-    <sys:String x:Key="MenuEditPattern">🔍 编辑 Asset 正则表达式</sys:String>
 
     <!-- Subfolder Manager Window -->
     <sys:String x:Key="SubfolderWindowTitle">版本子文件夹管理器</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 版本子文件夹管理</sys:String>
-    <sys:String x:Key="SubfolderHeaderDesc">查看并清理模拟器安装路径下保存的旧版本/新版本独立文件夹。</sys:String>
-    <sys:String x:Key="SubfolderColName">文件夹名称</sys:String>
-    <sys:String x:Key="SubfolderColDate">创建时间</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 已下载版本子文件夹管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">查看并清理安装目录下的历史版本子文件夹。</sys:String>
+    <sys:String x:Key="SubfolderRootPath">根目录路径: {0}</sys:String>
+    <sys:String x:Key="SubfolderBtnSelectAll">全选</sys:String>
+    <sys:String x:Key="SubfolderBtnDeselectAll">取消全选</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">刷新</sys:String>
+    <sys:String x:Key="SubfolderSelectionSummary">已选择: {0}个文件夹 ({1})</sys:String>
+    <sys:String x:Key="SubfolderColName">文件夹名</sys:String>
+    <sys:String x:Key="SubfolderColExe">可执行文件 (.exe)</sys:String>
     <sys:String x:Key="SubfolderColSize">大小</sys:String>
-    <sys:String x:Key="SubfolderColStatus">版本状态</sys:String>
+    <sys:String x:Key="SubfolderColDate">修改时间</sys:String>
+    <sys:String x:Key="SubfolderStatusInitial">请勾选要删除的文件夹，然后点击 [删除所选文件夹]。</sys:String>
     <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 删除所选文件夹</sys:String>
-    <sys:String x:Key="SubfolderBtnRefresh">🔄 刷新</sys:String>
     <sys:String x:Key="SubfolderBtnClose">关闭</sys:String>
-    <sys:String x:Key="SubfolderBadgeCurrent">📌 当前使用中</sys:String>
-    <sys:String x:Key="SubfolderBadgeOld">📦 旧版本</sys:String>
 
     <!-- Messages & Dialogs -->
     <sys:String x:Key="MsgConfirmDeleteSubfolder">确定要删除选中的 {0} 个文件夹吗？&#10;此操作无法撤销。</sys:String>
-    <sys:String x:Key="MsgDeleteComplete">所选文件夹已成功删除。</sys:String>
-    <sys:String x:Key="MsgSelectFolderToDelete">请至少选择一个要删除的文件夹。</sys:String>
-    <sys:String x:Key="MsgEditPatternPrompt">请输入 [{0}] 的 Asset 匹配正则表达式:</sys:String>
-    <sys:String x:Key="MsgEditPatternTitle">编辑 Asset 正则表达式</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">已成功删除选中的文件夹。</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">请选择至少一个要删除的文件夹。</sys:String>
     <sys:String x:Key="MsgUpdateSelfSuccess">程序已更新至最新版本。</sys:String>
     <sys:String x:Key="MsgUpdateSelfDownloading">正在下载程序更新 ({0})...</sys:String>
-    <sys:String x:Key="MsgUpdateSelfReady">更新文件准备就绪，程序即将自动重启...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">更新包已就绪，程序即将自动重启...</sys:String>
     <sys:String x:Key="MsgReady">就绪</sys:String>
 </ResourceDictionary>

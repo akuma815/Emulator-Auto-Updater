@@ -313,9 +313,9 @@
                               Width="100" Height="32" VerticalContentAlignment="Center"
                               FontSize="11" FontWeight="SemiBold" />
                 </StackPanel>
-                <Button Content="⚡ 프로그램 업데이트 가능" Command="{Binding PerformAppSelfUpdateCommand}" Visibility="{Binding IsAppUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" Style="{StaticResource DangerButtonStyle}" Height="36" Margin="4,0" Padding="12,0" ToolTip="{Binding AppUpdateBannerText}" />
-                <Button Content="{Binding CheckAllUpdatesButtonText}" Command="{Binding CheckAllUpdatesCommand}" Style="{StaticResource SuccessButtonStyle}" MinWidth="160" Height="36" Margin="4,0" ToolTip="목록 내 모든 에뮬레이터의 업데이트를 최대 10개 병렬로 확인합니다." />
-                <Button Content="{Binding DownloadAllUpdatesButtonText}" Command="{Binding DownloadAllUpdatesCommand}" Style="{StaticResource PrimaryButtonStyle}" MinWidth="170" Height="36" Margin="4,0" ToolTip="전체 업데이트 확인 후 최신 빌드를 병렬로 자동 다운로드 및 압축 해제합니다." />
+                <Button Content="{DynamicResource BtnAppUpdateAvailable}" Command="{Binding PerformAppSelfUpdateCommand}" Visibility="{Binding IsAppUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" Style="{StaticResource DangerButtonStyle}" Height="36" Margin="4,0" Padding="12,0" ToolTip="{Binding AppUpdateBannerText}" />
+                <Button Content="{Binding CheckAllUpdatesButtonText}" Command="{Binding CheckAllUpdatesCommand}" Style="{StaticResource SuccessButtonStyle}" MinWidth="160" Height="36" Margin="4,0" ToolTip="{DynamicResource TipCheckAllUpdates}" />
+                <Button Content="{Binding DownloadAllUpdatesButtonText}" Command="{Binding DownloadAllUpdatesCommand}" Style="{StaticResource PrimaryButtonStyle}" MinWidth="170" Height="36" Margin="4,0" ToolTip="{DynamicResource TipDownloadAllUpdates}" />
             </StackPanel>
         </Grid>
 
@@ -337,19 +337,19 @@
 
                     <!-- Group 1: Emulator Items -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="에뮬레이터:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
-                        <Button Content="+ 에뮬레이터 추가" Command="{Binding AddEmulatorCommand}" MinWidth="110" />
-                        <Button Content="선택 삭제" Command="{Binding RemoveEmulatorCommand}" Style="{StaticResource DangerButtonStyle}" MinWidth="85" />
+                        <TextBlock Text="{DynamicResource LblEmulatorGroup}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
+                        <Button Content="{DynamicResource BtnAddEmulator}" Command="{Binding AddEmulatorCommand}" MinWidth="110" />
+                        <Button Content="{DynamicResource BtnDeleteSelected}" Command="{Binding RemoveEmulatorCommand}" Style="{StaticResource DangerButtonStyle}" MinWidth="85" />
                         <Separator Width="1" Height="20" Background="#E2E8F0" Margin="12,0" />
                     </StackPanel>
 
                     <!-- Group 2: Config Management -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="설정 파일:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
-                        <Button Content="설정 불러오기" Command="{Binding LoadSettingsCommand}" MinWidth="95" />
-                        <Button Content="설정 저장" Command="{Binding SaveSettingsCommand}" MinWidth="85" />
-                        <Button Content="설정 파일 열기..." Command="{Binding OpenConfigFileCommand}" MinWidth="115" />
-                        <Button Content="다른 이름으로 저장..." Command="{Binding SaveConfigFileAsCommand}" MinWidth="130" />
+                        <TextBlock Text="{DynamicResource LblConfigFileGroup}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
+                        <Button Content="{DynamicResource BtnLoadSettings}" Command="{Binding LoadSettingsCommand}" MinWidth="95" />
+                        <Button Content="{DynamicResource BtnSaveSettings}" Command="{Binding SaveSettingsCommand}" MinWidth="85" />
+                        <Button Content="{DynamicResource BtnOpenConfigFile}" Command="{Binding OpenConfigFileCommand}" MinWidth="115" />
+                        <Button Content="{DynamicResource BtnSaveConfigFileAs}" Command="{Binding SaveConfigFileAsCommand}" MinWidth="130" />
                     </StackPanel>
                 </Grid>
 
@@ -364,26 +364,26 @@
 
                     <!-- Group 3: CheckBoxes -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox Content="기동 시 전체 업데이트 확인"
+                        <CheckBox Content="{DynamicResource ChkCheckAllOnStartup}"
                                   IsChecked="{Binding CheckAllUpdatesOnStartup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   VerticalAlignment="Center"
                                   Margin="0,0,20,0"
                                   Foreground="{StaticResource PrimaryTextBrush}"
                                   FontSize="12" />
-                        <CheckBox Content="버전/날짜 하위 폴더에 저장"
+                        <CheckBox Content="{DynamicResource ChkUseVersionSubfolders}"
                                   IsChecked="{Binding UseVersionSubfolders, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   VerticalAlignment="Center"
                                   Margin="0,0,20,0"
                                   Foreground="{StaticResource PrimaryTextBrush}"
                                   FontSize="12"
-                                  ToolTip="설치 폴더 내에 버전명(없을 경우 Release 날짜)으로 하위 폴더를 생성하여 저장합니다." />
+                                  ToolTip="{DynamicResource TipUseVersionSubfolders}" />
                     </StackPanel>
 
                     <!-- Group 4: Default Pattern Settings -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <TextBlock Text="기본 Asset Pattern:" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
+                        <TextBlock Text="{DynamicResource LblDefaultAssetPattern}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11" />
                         <TextBox Text="{Binding DefaultAssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="0,0,6,0" />
-                        <Button Content="패턴 변환" Command="{Binding ConvertDefaultAssetPatternCommand}" MinWidth="80" ToolTip="입력된 예시 파일명을 정규식 추천 패턴으로 변환합니다." />
+                        <Button Content="{DynamicResource BtnConvertPattern}" Command="{Binding ConvertDefaultAssetPatternCommand}" MinWidth="80" ToolTip="{DynamicResource TipConvertDefaultPattern}" />
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -404,7 +404,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="📋 등록된 에뮬레이터 목록" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock Grid.Row="0" Text="{DynamicResource HeaderEmulatorList}" Style="{StaticResource SectionHeaderStyle}" />
 
                     <DataGrid x:Name="EmulatorDataGrid"
                               Grid.Row="1"
@@ -419,9 +419,9 @@
                               RowHeaderWidth="0">
                         <DataGrid.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="📁 다운로드된 버전 폴더 관리..."
+                                <MenuItem Header="{DynamicResource MenuManageSubfolders}"
                                           Click="ManageSubfolders_Click"
-                                          ToolTip="선택한 에뮬레이터의 하위 저장 폴더 목록을 조회하고 다중 선택하여 삭제합니다." />
+                                          ToolTip="{DynamicResource TipManageSubfolders}" />
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.RowStyle>
@@ -444,10 +444,10 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="에뮬레이터 이름" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.2*" MinWidth="100" />
+                            <DataGridTextColumn Header="{DynamicResource ColEmulatorName}" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.2*" MinWidth="100" />
                             
                             <!-- Status Pill Badge Column -->
-                            <DataGridTemplateColumn Header="상태" Width="1.6*" MinWidth="135" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="{DynamicResource ColStatus}" Width="1.6*" MinWidth="135" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="12" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,2">
@@ -504,7 +504,7 @@
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
-                                                <TextBlock Text="{Binding StatusText, FallbackValue=미확인}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Foreground" Value="#475569" />
@@ -534,9 +534,9 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="Repository / URL" Binding="{Binding Repository, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2.2*" MinWidth="130" />
-                            <DataGridTextColumn Header="설치 폴더 경로" Binding="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
-                            <DataGridTextColumn Header="Asset Pattern (정규식)" Binding="{Binding AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
+                            <DataGridTextColumn Header="{DynamicResource ColRepository}" Binding="{Binding Repository, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2.2*" MinWidth="130" />
+                            <DataGridTextColumn Header="{DynamicResource ColInstallPath}" Binding="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
+                            <DataGridTextColumn Header="{DynamicResource ColAssetPattern}" Binding="{Binding AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -552,7 +552,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="⚙️ 선택한 에뮬레이터 정보 및 제어" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock Grid.Row="0" Text="{DynamicResource HeaderEmulatorDetail}" Style="{StaticResource SectionHeaderStyle}" />
 
                     <!-- Form Inputs Grid -->
                     <Grid Grid.Row="1" Margin="0,0,0,12">
@@ -570,43 +570,43 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Name -->
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="에뮬레이터 명:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEmulator.Name, FallbackValue=선택 항목 없음}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LblDetailName}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEmulator.Name, FallbackValue={DynamicResource TxtNoSelection}}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Repository -->
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Repository:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEmulator.Repository, FallbackValue=선택 항목 없음}" Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LblDetailRepo}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEmulator.Repository, FallbackValue={DynamicResource TxtNoSelection}}" Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Target Folder -->
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="설치 폴더:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LblDetailFolder}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
                         <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,2">
-                            <Button Content="폴더 선택" Command="{Binding BrowseFolderCommand}" DockPanel.Dock="Right" Width="85" Margin="4,0,0,0" />
-                            <TextBlock Text="{Binding SelectedEmulator.Folder, FallbackValue=선택 항목 없음}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" />
+                            <Button Content="{DynamicResource BtnBrowseFolder}" Command="{Binding BrowseFolderCommand}" DockPanel.Dock="Right" Width="85" Margin="4,0,0,0" />
+                            <TextBlock Text="{Binding SelectedEmulator.Folder, FallbackValue={DynamicResource TxtNoSelection}}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" />
                         </DockPanel>
 
                         <!-- Asset Pattern -->
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Asset Pattern:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="{DynamicResource LblDetailPattern}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
                         <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,2">
-                            <Button Content="패턴 자동 변환" Command="{Binding ConvertSelectedAssetPatternCommand}" DockPanel.Dock="Right" Width="105" Margin="4,0,0,0" ToolTip="입력한 예시 파일명(예: PPSSPPWindows64_1.17.1.zip)을 추천 정규식 패턴으로 변환합니다." />
+                            <Button Content="{DynamicResource BtnAutoConvertPattern}" Command="{Binding ConvertSelectedAssetPatternCommand}" DockPanel.Dock="Right" Width="105" Margin="4,0,0,0" ToolTip="{DynamicResource TipAutoConvertPattern}" />
                             <TextBox Text="{Binding SelectedEmulator.AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
                         </DockPanel>
 
                         <!-- Installed Version -->
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="설치된 버전:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedEmulator.InstalledVersion, FallbackValue=없음}" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LblDetailInstalledVersion}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedEmulator.InstalledVersion, FallbackValue={DynamicResource TxtNone}}" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Last Downloaded -->
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="마지막 다운로드:" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="{DynamicResource LblDetailLastDownloaded}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
                         <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedEmulator.LastDownloadedAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=-}" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
                     </Grid>
 
                     <!-- Individual Emulator Actions -->
                     <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,12">
                         <UniformGrid Columns="4">
-                            <Button Content="업데이트 확인" Command="{Binding CheckUpdatesCommand}" Style="{StaticResource SuccessButtonStyle}" Height="34" Margin="2" />
-                            <Button Content="다운로드" Command="{Binding DownloadOnlyCommand}" Height="34" Margin="2" />
-                            <Button Content="다운로드 + 압축 해제" Command="{Binding DownloadUpdateCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="34" Margin="2" />
-                            <Button Content="📁 하위 폴더 관리" Click="ManageSubfolders_Click" Style="{StaticResource SecondaryButtonStyle}" Height="34" Margin="2" ToolTip="이 에뮬레이터의 하위 버전 폴더 목록을 조회하고 다중 선택하여 삭제합니다." />
+                            <Button Content="{DynamicResource BtnCheckUpdate}" Command="{Binding CheckUpdatesCommand}" Style="{StaticResource SuccessButtonStyle}" Height="34" Margin="2" />
+                            <Button Content="{DynamicResource BtnDownloadOnly}" Command="{Binding DownloadOnlyCommand}" Height="34" Margin="2" />
+                            <Button Content="{DynamicResource BtnDownloadAndExtract}" Command="{Binding DownloadUpdateCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="34" Margin="2" />
+                            <Button Content="{DynamicResource BtnManageSubfolders}" Click="ManageSubfolders_Click" Style="{StaticResource SecondaryButtonStyle}" Height="34" Margin="2" ToolTip="{DynamicResource TipManageSubfolders}" />
                         </UniformGrid>
                     </Border>
 
@@ -618,8 +618,8 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text="최신 릴리즈 버전: " FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SelectedReleaseVersion, FallbackValue=없음}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text="{DynamicResource LblLatestReleaseVersion}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding SelectedReleaseVersion, FallbackValue={DynamicResource TxtNone}}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                         </StackPanel>
 
                         <TextBox Grid.Row="1"
@@ -652,11 +652,11 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,0,0,6">
-                        <TextBlock Text="📦 조회된 다운로드 파일 목록" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource HeaderDownloadedFiles}" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="📋 파일명 복사" Command="{Binding CopySelectedAssetNameCommand}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="선택한 패치 파일명을 클립보드에 복사합니다." />
-                            <Button Content="🪄 패턴에 반영" Command="{Binding ApplySelectedAssetToPatternCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="선택한 파일명을 추천 Asset Pattern 정규식으로 전환합니다." />
-                            <Button Content="🚫 패턴에서 제외" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3" FontSize="11" Margin="0" ToolTip="선택한 제외 대상 파일명(예: symbols, debug)을 분석하여 패턴에 부정 전방 탐색 제외 조건((?!.*symbols))을 자동으로 추가합니다." />
+                            <Button Content="{DynamicResource BtnCopyFileName}" Command="{Binding CopySelectedAssetNameCommand}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="{DynamicResource TipCopyFileName}" />
+                            <Button Content="{DynamicResource BtnApplyToPattern}" Command="{Binding ApplySelectedAssetToPatternCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,4,0" ToolTip="{DynamicResource TipApplyToPattern}" />
+                            <Button Content="{DynamicResource BtnExcludeFromPattern}" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3" FontSize="11" Margin="0" ToolTip="{DynamicResource TipExcludeFromPattern}" />
                         </StackPanel>
                     </Grid>
 
@@ -670,15 +670,15 @@
                               RowHeaderWidth="0">
                         <DataGrid.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="📋 파일명 복사" Command="{Binding CopySelectedAssetNameCommand}" />
-                                <MenuItem Header="🪄 Asset Pattern으로 복사 &amp; 자동 변환" Command="{Binding ApplySelectedAssetToPatternCommand}" />
-                                <MenuItem Header="🚫 패턴에서 제외 조건 추가" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" />
+                                <MenuItem Header="{DynamicResource MenuCopyFileName}" Command="{Binding CopySelectedAssetNameCommand}" />
+                                <MenuItem Header="{DynamicResource MenuApplyToPattern}" Command="{Binding ApplySelectedAssetToPatternCommand}" />
+                                <MenuItem Header="{DynamicResource MenuExcludeFromPattern}" Command="{Binding ExcludeSelectedAssetFromPatternCommand}" />
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="파일 이름" Binding="{Binding AssetName}" Width="3*" />
-                            <DataGridTextColumn Header="버전 Tag" Binding="{Binding Version}" Width="1.2*" />
-                            <DataGridTextColumn Header="게시 일시" Binding="{Binding PublishedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="1.5*" />
+                            <DataGridTextColumn Header="{DynamicResource ColFileName}" Binding="{Binding AssetName}" Width="3*" />
+                            <DataGridTextColumn Header="{DynamicResource ColVersionTag}" Binding="{Binding Version}" Width="1.2*" />
+                            <DataGridTextColumn Header="{DynamicResource ColPublishDate}" Binding="{Binding PublishedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="1.5*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -695,8 +695,8 @@
 
                         <!-- Header: Title & Clear Log Button -->
                         <Grid Grid.Row="0" Margin="0,0,0,6">
-                            <TextBlock Text="📊 작업 현황 및 로그 콘솔" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
-                            <Button Content="로그 지우기" Command="{Binding ClearLogCommand}" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="8,3" FontSize="11" Margin="0" />
+                            <TextBlock Text="{DynamicResource HeaderLogConsole}" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
+                            <Button Content="{DynamicResource BtnClearLog}" Command="{Binding ClearLogCommand}" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="8,3" FontSize="11" Margin="0" />
                         </Grid>
 
                         <!-- Clean Progress Bar & Percentage -->
@@ -729,7 +729,7 @@
                         <!-- Current Config Path Footer -->
                         <StackPanel Grid.Row="3" VerticalAlignment="Bottom">
                             <Separator Background="#E2E8F0" Margin="0,0,0,4" />
-                            <TextBlock Text="{Binding CurrentConfigFilePath, StringFormat={}설정 파일: {0}, FallbackValue=설정 파일: -}" Foreground="#64748B" TextTrimming="CharacterEllipsis" FontSize="11" />
+                            <TextBlock Text="{Binding CurrentConfigFilePath, StringFormat={}{0}}" Foreground="#64748B" TextTrimming="CharacterEllipsis" FontSize="11" />
                         </StackPanel>
                     </Grid>
                 </Border>

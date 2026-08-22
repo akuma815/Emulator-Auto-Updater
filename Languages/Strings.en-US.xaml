@@ -5,66 +5,117 @@
     <sys:String x:Key="AppTitle">Emulator Auto Updater</sys:String>
     <sys:String x:Key="AppSubtitle">All-in-One Emulator Auto Updater &amp; Parallel Downloader</sys:String>
     <sys:String x:Key="AppUpdateAvailableBadge">⚡ New App Version {0} Available - [Update]</sys:String>
-    
+    <sys:String x:Key="BtnAppUpdateAvailable">⚡ Update Available</sys:String>
+    <sys:String x:Key="LabelLanguage">🌐 Language:</sys:String>
+
     <!-- Top Action Buttons -->
-    <sys:String x:Key="BtnCheckAllUpdates">🔍 Check All Updates</sys:String>
-    <sys:String x:Key="BtnCancelOperation">🛑 Cancel</sys:String>
-    <sys:String x:Key="BtnSubfolderManager">📁 Version Subfolders</sys:String>
-    <sys:String x:Key="LabelLanguage">🌐 Language / 언어:</sys:String>
+    <sys:String x:Key="BtnCheckAllUpdates">Check All Updates</sys:String>
+    <sys:String x:Key="BtnDownloadAllUpdates">Download All</sys:String>
+    <sys:String x:Key="BtnCancelOperation">Cancel</sys:String>
+    <sys:String x:Key="BtnCancelCheck">Cancel Check</sys:String>
+    <sys:String x:Key="BtnCancelDownload">Cancel Download</sys:String>
+    <sys:String x:Key="TipCheckAllUpdates">Check updates for all emulators in parallel (up to 10 concurrently).</sys:String>
+    <sys:String x:Key="TipDownloadAllUpdates">Automatically check, download, and extract latest builds in parallel.</sys:String>
 
-    <!-- Global Options -->
-    <sys:String x:Key="OptCheckAllOnStartup">Automatically check all updates on startup</sys:String>
-    <sys:String x:Key="OptUseVersionSubfolders">Create version subfolders on update (Independent run)</sys:String>
+    <!-- Action Toolbar Row 0 & 1 -->
+    <sys:String x:Key="LblEmulatorGroup">Emulators:</sys:String>
+    <sys:String x:Key="BtnAddEmulator">+ Add Emulator</sys:String>
+    <sys:String x:Key="BtnDeleteSelected">Delete Selected</sys:String>
+    <sys:String x:Key="LblConfigFileGroup">Config File:</sys:String>
+    <sys:String x:Key="BtnLoadSettings">Load Config</sys:String>
+    <sys:String x:Key="BtnSaveSettings">Save Config</sys:String>
+    <sys:String x:Key="BtnOpenConfigFile">Open Config File...</sys:String>
+    <sys:String x:Key="BtnSaveConfigFileAs">Save Config As...</sys:String>
+    <sys:String x:Key="ChkCheckAllOnStartup">Check for updates on startup</sys:String>
+    <sys:String x:Key="ChkUseVersionSubfolders">Save to version/date subfolder</sys:String>
+    <sys:String x:Key="TipUseVersionSubfolders">Creates and saves inside a subfolder named after the version tag or release date.</sys:String>
+    <sys:String x:Key="LblDefaultAssetPattern">Default Asset Pattern:</sys:String>
+    <sys:String x:Key="BtnConvertPattern">Convert Pattern</sys:String>
+    <sys:String x:Key="TipConvertDefaultPattern">Convert an example filename into a recommended regex pattern.</sys:String>
 
-    <!-- DataGrid Column Headers -->
-    <sys:String x:Key="ColEmulator">Emulator</sys:String>
-    <sys:String x:Key="ColInstalledFolder">Install Path</sys:String>
-    <sys:String x:Key="ColLatestRelease">Latest Release (Date)</sys:String>
-    <sys:String x:Key="ColInstalledVersion">Installed Version</sys:String>
+    <!-- Left Pane: Emulator List DataGrid -->
+    <sys:String x:Key="HeaderEmulatorList">📋 Registered Emulators</sys:String>
+    <sys:String x:Key="ColEmulatorName">Emulator Name</sys:String>
     <sys:String x:Key="ColStatus">Status</sys:String>
-    <sys:String x:Key="ColActions">Actions</sys:String>
+    <sys:String x:Key="ColRepository">Repository / URL</sys:String>
+    <sys:String x:Key="ColInstallPath">Install Path</sys:String>
+    <sys:String x:Key="ColAssetPattern">Asset Pattern (Regex)</sys:String>
+    <sys:String x:Key="MenuManageSubfolders">📁 Manage Version Subfolders...</sys:String>
+    <sys:String x:Key="TipManageSubfolders">View and delete downloaded version subfolders for this emulator.</sys:String>
 
-    <!-- Status Badges -->
-    <sys:String x:Key="StatusUpToDate">Up to date</sys:String>
-    <sys:String x:Key="StatusUpdateAvailable">Update Available</sys:String>
+    <!-- Right Pane: Selected Emulator Details -->
+    <sys:String x:Key="HeaderEmulatorDetail">⚙️ Selected Emulator Info &amp; Controls</sys:String>
+    <sys:String x:Key="LblDetailName">Name:</sys:String>
+    <sys:String x:Key="LblDetailRepo">Repository:</sys:String>
+    <sys:String x:Key="LblDetailFolder">Install Folder:</sys:String>
+    <sys:String x:Key="BtnBrowseFolder">Browse...</sys:String>
+    <sys:String x:Key="LblDetailPattern">Asset Pattern:</sys:String>
+    <sys:String x:Key="BtnAutoConvertPattern">Auto Convert</sys:String>
+    <sys:String x:Key="TipAutoConvertPattern">Converts an example filename (e.g. PPSSPPWindows64_1.17.1.zip) into a regex pattern.</sys:String>
+    <sys:String x:Key="LblDetailInstalledVersion">Installed Version:</sys:String>
+    <sys:String x:Key="LblDetailLastDownloaded">Last Downloaded:</sys:String>
+    <sys:String x:Key="BtnCheckUpdate">Check Update</sys:String>
+    <sys:String x:Key="BtnDownloadOnly">Download</sys:String>
+    <sys:String x:Key="BtnDownloadAndExtract">Download &amp; Extract</sys:String>
+    <sys:String x:Key="BtnManageSubfolders">📁 Manage Subfolders</sys:String>
+    <sys:String x:Key="LblLatestReleaseVersion">Latest Release Version:</sys:String>
+    <sys:String x:Key="TxtNoSelection">No Selection</sys:String>
+    <sys:String x:Key="TxtNone">None</sys:String>
+
+    <!-- Bottom Left: Downloadable Assets List -->
+    <sys:String x:Key="HeaderDownloadedFiles">📦 Downloadable Assets Found</sys:String>
+    <sys:String x:Key="BtnCopyFileName">📋 Copy Filename</sys:String>
+    <sys:String x:Key="TipCopyFileName">Copy the selected asset filename to clipboard.</sys:String>
+    <sys:String x:Key="BtnApplyToPattern">🪄 Apply to Pattern</sys:String>
+    <sys:String x:Key="TipApplyToPattern">Convert selected asset name into a recommended regex pattern.</sys:String>
+    <sys:String x:Key="BtnExcludeFromPattern">🚫 Exclude from Pattern</sys:String>
+    <sys:String x:Key="TipExcludeFromPattern">Adds a negative lookahead exclusion pattern (e.g. (?!.*symbols)) to ignore this asset.</sys:String>
+    <sys:String x:Key="MenuCopyFileName">📋 Copy Filename</sys:String>
+    <sys:String x:Key="MenuApplyToPattern">🪄 Convert &amp; Apply to Asset Pattern</sys:String>
+    <sys:String x:Key="MenuExcludeFromPattern">🚫 Add Exclusion Condition to Pattern</sys:String>
+    <sys:String x:Key="ColFileName">File Name</sys:String>
+    <sys:String x:Key="ColVersionTag">Version Tag</sys:String>
+    <sys:String x:Key="ColPublishDate">Published Date</sys:String>
+
+    <!-- Bottom Right: Activity Log Console -->
+    <sys:String x:Key="HeaderLogConsole">📊 Activity &amp; Log Console</sys:String>
+    <sys:String x:Key="BtnClearLog">Clear Log</sys:String>
+    <sys:String x:Key="LblCurrentConfigFile">Config File:</sys:String>
+
+    <!-- Status Badges & Texts -->
+    <sys:String x:Key="StatusUpToDateRoot">Up to Date (Root)</sys:String>
+    <sys:String x:Key="StatusUpToDateSubfolder">Up to Date ({0})</sys:String>
+    <sys:String x:Key="StatusUpdateAvailable">Update Available ({0})</sys:String>
     <sys:String x:Key="StatusChecking">Checking...</sys:String>
     <sys:String x:Key="StatusDownloading">Downloading...</sys:String>
     <sys:String x:Key="StatusExtracting">Extracting...</sys:String>
+    <sys:String x:Key="StatusCheckFailed">Check Failed</sys:String>
+    <sys:String x:Key="StatusUnchecked">Unchecked</sys:String>
     <sys:String x:Key="StatusNotInstalled">Not Installed</sys:String>
-
-    <!-- DataGrid Action Buttons -->
-    <sys:String x:Key="BtnCheckUpdate">Check</sys:String>
-    <sys:String x:Key="BtnUpdateNow">Update</sys:String>
-    <sys:String x:Key="BtnOpenFolder">Open Folder</sys:String>
-
-    <!-- Context Menu Items -->
-    <sys:String x:Key="MenuCheckUpdate">⚡ Check Update</sys:String>
-    <sys:String x:Key="MenuForceDownload">📥 Force Download (Overwrite)</sys:String>
-    <sys:String x:Key="MenuOpenFolder">📁 Open Install Folder</sys:String>
-    <sys:String x:Key="MenuEditPattern">🔍 Edit Asset Regex Pattern</sys:String>
 
     <!-- Subfolder Manager Window -->
     <sys:String x:Key="SubfolderWindowTitle">Version Subfolder Manager</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 Version Subfolder Management</sys:String>
-    <sys:String x:Key="SubfolderHeaderDesc">Manage and clean up previous and current version subfolders stored inside the emulator directory.</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 Downloaded Version Subfolder Manager</sys:String>
+    <sys:String x:Key="SubfolderHeaderDesc">Inspect and clean up old/new version subfolders stored in the emulator directory.</sys:String>
+    <sys:String x:Key="SubfolderRootPath">Root Path: {0}</sys:String>
+    <sys:String x:Key="SubfolderBtnSelectAll">Select All</sys:String>
+    <sys:String x:Key="SubfolderBtnDeselectAll">Deselect All</sys:String>
+    <sys:String x:Key="SubfolderBtnRefresh">Refresh</sys:String>
+    <sys:String x:Key="SubfolderSelectionSummary">Selected: {0} folder(s) ({1})</sys:String>
     <sys:String x:Key="SubfolderColName">Folder Name</sys:String>
-    <sys:String x:Key="SubfolderColDate">Created Date</sys:String>
+    <sys:String x:Key="SubfolderColExe">Executable (.exe)</sys:String>
     <sys:String x:Key="SubfolderColSize">Size</sys:String>
-    <sys:String x:Key="SubfolderColStatus">Version Status</sys:String>
+    <sys:String x:Key="SubfolderColDate">Date Modified</sys:String>
+    <sys:String x:Key="SubfolderStatusInitial">Select folders to delete and click [Delete Selected].</sys:String>
     <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ Delete Selected</sys:String>
-    <sys:String x:Key="SubfolderBtnRefresh">🔄 Refresh</sys:String>
     <sys:String x:Key="SubfolderBtnClose">Close</sys:String>
-    <sys:String x:Key="SubfolderBadgeCurrent">📌 Currently Active</sys:String>
-    <sys:String x:Key="SubfolderBadgeOld">📦 Older Version</sys:String>
 
     <!-- Messages & Dialogs -->
     <sys:String x:Key="MsgConfirmDeleteSubfolder">Are you sure you want to delete the selected {0} folder(s)?&#10;This action cannot be undone.</sys:String>
-    <sys:String x:Key="MsgDeleteComplete">Selected folder(s) deleted successfully.</sys:String>
-    <sys:String x:Key="MsgSelectFolderToDelete">Please select one or more folders to delete.</sys:String>
-    <sys:String x:Key="MsgEditPatternPrompt">Enter asset matching Regex pattern for [{0}]:</sys:String>
-    <sys:String x:Key="MsgEditPatternTitle">Edit Asset Regex Pattern</sys:String>
+    <sys:String x:Key="MsgDeleteComplete">Selected folder(s) have been deleted successfully.</sys:String>
+    <sys:String x:Key="MsgSelectFolderToDelete">Please select at least one folder to delete.</sys:String>
     <sys:String x:Key="MsgUpdateSelfSuccess">Application has been updated to the latest version.</sys:String>
-    <sys:String x:Key="MsgUpdateSelfDownloading">Downloading app update ({0})...</sys:String>
-    <sys:String x:Key="MsgUpdateSelfReady">Update files ready. Restarting application automatically...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfDownloading">Downloading application update ({0})...</sys:String>
+    <sys:String x:Key="MsgUpdateSelfReady">Update package ready. The application will restart automatically...</sys:String>
     <sys:String x:Key="MsgReady">Ready</sys:String>
 </ResourceDictionary>
