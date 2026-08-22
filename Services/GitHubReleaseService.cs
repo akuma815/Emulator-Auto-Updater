@@ -323,6 +323,8 @@ public sealed class GitHubReleaseService
     private static DateTimeOffset ParseDolphinBuildDate(string content, int buildLinkIndex)
     {
         var precedingContent = content[..buildLinkIndex];
+
+        // 1. Try HTML title attribute with ISO date
         var dateMatches = Regex.Matches(
             precedingContent,
             @"title=[""'](?<date>\d{4}-\d{2}-\d{2}T[^""']+)[""']",
@@ -338,7 +340,41 @@ public sealed class GitHubReleaseService
             return publishedAt;
         }
 
+        // 2. Try markdown relative time (e.g. "1 day, 2 hours ago", "3 hours ago")
+        var relTimeMatch = Regex.Match(precedingContent, @"\)(?<time>\d+\s+(?:days?|hours?|minutes?|weeks?|months?)[^()\n\r\[\]]*)", RegexOptions.RightToLeft);
+        if (relTimeMatch.Success)
+        {
+            var relText = relTimeMatch.Groups["time"].Value;
+            return ParseRelativeTime(relText, DateTimeOffset.Now);
+        }
+
         return DateTimeOffset.MinValue;
+    }
+
+    private static DateTimeOffset ParseRelativeTime(string text, DateTimeOffset baseTime)
+    {
+        var result = baseTime;
+        var dayMatch = Regex.Match(text, @"(\d+)\s+days?", RegexOptions.IgnoreCase);
+        if (dayMatch.Success && int.TryParse(dayMatch.Groups[1].Value, out var days))
+            result = result.AddDays(-days);
+
+        var hourMatch = Regex.Match(text, @"(\d+)\s+hours?", RegexOptions.IgnoreCase);
+        if (hourMatch.Success && int.TryParse(hourMatch.Groups[1].Value, out var hours))
+            result = result.AddHours(-hours);
+
+        var minMatch = Regex.Match(text, @"(\d+)\s+(?:minutes?|mins?)", RegexOptions.IgnoreCase);
+        if (minMatch.Success && int.TryParse(minMatch.Groups[1].Value, out var mins))
+            result = result.AddMinutes(-mins);
+
+        var weekMatch = Regex.Match(text, @"(\d+)\s+weeks?", RegexOptions.IgnoreCase);
+        if (weekMatch.Success && int.TryParse(weekMatch.Groups[1].Value, out var weeks))
+            result = result.AddDays(-weeks * 7);
+
+        var monthMatch = Regex.Match(text, @"(\d+)\s+months?", RegexOptions.IgnoreCase);
+        if (monthMatch.Success && int.TryParse(monthMatch.Groups[1].Value, out var months))
+            result = result.AddMonths(-months);
+
+        return result;
     }
 
     private async Task<string?> GetDolphinDownloadPageHtmlAsync(
@@ -365,7 +401,7 @@ public sealed class GitHubReleaseService
         foreach (var url in urls)
         {
             using var perUrlCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            perUrlCts.CancelAfter(TimeSpan.FromSeconds(6));
+            perUrlCts.CancelAfter(TimeSpan.FromSeconds(15));
 
             using var request = new HttpRequestMessage(HttpMethod.Get, url)
             {
