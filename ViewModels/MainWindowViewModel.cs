@@ -614,7 +614,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 AppUpdateDownloadUrl = updateCheck.DownloadUrl;
                 IsAppUpdateAvailable = true;
                 AppUpdateBannerText = $"⚡ 프로그램 신규 업데이트가 있습니다 (v{updateCheck.LatestVersion})! [프로그램 업데이트] 버튼을 눌러 자동 갱신하세요.";
-                AppendLog($"[프로그램 업데이트] 새 버전(v{updateCheck.LatestVersion})이 출시되었습니다. 상단 버튼을 클릭해 최신 버전으로 갱신하세요.");
+                AppendLog(LocalizationService.GetString("LogAppUpdateFound", updateCheck.LatestVersion));
             }
             else
             {
@@ -756,7 +756,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (ReferenceEquals(SelectedEmulator, emulator))
         {
-            StatusMessage = $"'{emulator.Name}'의 업데이트 정보를 확인하는 중입니다...";
+            StatusMessage = LocalizationService.GetString("LogCheckingSingle", emulator.Name);
             Progress = 0;
         }
 
@@ -809,7 +809,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 latestVersion,
                 notesHeader + release.Body);
 
-            AppendLog($"[{emulator.Name}] 최신 릴리즈 확인 완료: v{latestVersion} (방식: {release.FetchSource})");
+            AppendLog(LocalizationService.GetString("LogCheckSingleSuccess", emulator.Name, latestVersion, release.FetchSource));
 
             var dualStatus = EvaluateDualFolderStatus(emulator, foundAssets.First());
             if (dualStatus.IsUpToDate)
@@ -967,7 +967,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     var currentCompleted = Interlocked.Increment(ref completedCount);
                     var (resultText, _) = results[index];
                     AppendLog($"[{emulator.Name}] {resultText}");
-                    StatusMessage = $"전체 업데이트 확인 중 ({currentCompleted}/{emulators.Count}): {emulator.Name}";
+                    StatusMessage = LocalizationService.GetString("LogCheckProgress", currentCompleted, emulators.Count, emulator.Name);
                     Progress = currentCompleted * 100 / emulators.Count;
                 });
 
@@ -1143,8 +1143,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     {
                         emulator.StatusText = dualStatus.SummaryStatusText;
                         emulator.StatusType = "UpToDate";
-                        AppendLog($"[{emulator.Name}] {dualStatus.DetailedLogText} 이 이미 준비되어 있어 다운로드를 건너땁니다.");
-                        downloadSummary[index] = $"{emulator.Name}: 이미 최신 ({dualStatus.SummaryStatusText})";
+                        AppendLog(LocalizationService.GetString("LogSkipAlreadyUpToDate", emulator.Name));
+                        downloadSummary[index] = $"{emulator.Name}: ({dualStatus.SummaryStatusText})";
                     }
                     else
                     {
@@ -1220,7 +1220,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                     var currentCompleted = Interlocked.Increment(ref completedDownloadCount);
                     AppendLog($"[{emulator.Name}] {downloadSummary[index]}");
-                    StatusMessage = $"[2/2단계] 전체 다운로드 중 ({currentCompleted}/{emulators.Count}): {emulator.Name}";
+                    StatusMessage = LocalizationService.GetString("LogDownloadProgress", currentCompleted, emulators.Count, emulator.Name);
                     Progress = 50 + (currentCompleted * 50 / emulators.Count);
                 });
 
@@ -2784,7 +2784,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasSubfolderVersion: true,
                 SubfolderName: foundSubfolderName,
                 SummaryStatusText: LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)"),
-                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{foundSubfolderName}')[✓ 최신]");
+                DetailedLogText: LocalizationService.GetString("LogDetailedBothUpToDate", foundSubfolderName));
         }
 
         if (isSubfolderUpToDate)
@@ -2795,7 +2795,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasSubfolderVersion: true,
                 SubfolderName: foundSubfolderName,
                 SummaryStatusText: LocalizationService.GetString("StatusUpToDateSubfolder", foundSubfolderName),
-                DetailedLogText: $"루트 폴더[미업데이트] & 하위 폴더('{foundSubfolderName}')[✓ 최신 감지]");
+                DetailedLogText: LocalizationService.GetString("LogDetailedSubfolderUpToDate", foundSubfolderName));
         }
 
         if (isRootUpToDate)
@@ -2806,7 +2806,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 HasSubfolderVersion: false,
                 SubfolderName: targetSubfolderName,
                 SummaryStatusText: LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)"),
-                DetailedLogText: $"루트 폴더[✓ 최신] & 하위 폴더('{targetSubfolderName}')[미존재]");
+                DetailedLogText: LocalizationService.GetString("LogDetailedRootUpToDate", "루트 폴더 [✓ 최신]"));
         }
 
         return new DualFolderStatusResult(
@@ -2815,7 +2815,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             HasSubfolderVersion: false,
             SubfolderName: targetSubfolderName,
             SummaryStatusText: LocalizationService.GetString("StatusUpdateAvailable", asset.Version),
-            DetailedLogText: $"루트 폴더[업데이트 필요] & 하위 폴더('{targetSubfolderName}')[미존재]");
+            DetailedLogText: LocalizationService.GetString("LogDetailedUpdateRequired", "업데이트 필요"));
     }
 
     private async Task ExecuteBusyOperationAsync(Func<Task> operation, string busyMessage)
