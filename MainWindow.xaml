@@ -571,17 +571,17 @@
 
                         <!-- Name -->
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LblDetailName}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEmulator.Name, FallbackValue={DynamicResource TxtNoSelection}}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEmulator.Name, FallbackValue=-}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Repository -->
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LblDetailRepo}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEmulator.Repository, FallbackValue={DynamicResource TxtNoSelection}}" Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEmulator.Repository, FallbackValue=-}" Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Target Folder -->
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LblDetailFolder}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
                         <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,2">
                             <Button Content="{DynamicResource BtnBrowseFolder}" Command="{Binding BrowseFolderCommand}" DockPanel.Dock="Right" Width="85" Margin="4,0,0,0" />
-                            <TextBlock Text="{Binding SelectedEmulator.Folder, FallbackValue={DynamicResource TxtNoSelection}}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" />
+                            <TextBlock Text="{Binding SelectedEmulator.Folder, FallbackValue=-}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" />
                         </DockPanel>
 
                         <!-- Asset Pattern -->
@@ -593,7 +593,7 @@
 
                         <!-- Installed Version -->
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LblDetailInstalledVersion}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedEmulator.InstalledVersion, FallbackValue={DynamicResource TxtNone}}" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedEmulator.InstalledVersion, FallbackValue=-}" Foreground="{StaticResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
 
                         <!-- Last Downloaded -->
                         <TextBlock Grid.Row="5" Grid.Column="0" Text="{DynamicResource LblDetailLastDownloaded}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,4" />
@@ -619,7 +619,7 @@
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
                             <TextBlock Text="{DynamicResource LblLatestReleaseVersion}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,0,6,0" />
-                            <TextBlock Text="{Binding SelectedReleaseVersion, FallbackValue={DynamicResource TxtNone}}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text="{Binding SelectedReleaseVersion, FallbackValue=-}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                         </StackPanel>
 
                         <TextBox Grid.Row="1"
