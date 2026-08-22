@@ -78,16 +78,40 @@
                     </DataGridTemplateColumn>
 
                     <!-- Folder Name -->
-                    <DataGridTextColumn Header="{DynamicResource SubfolderColName}" Binding="{Binding FolderName}" Width="1.8*" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding FolderName}" Width="1.8*" IsReadOnly="True">
+                        <DataGridTextColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{DynamicResource SubfolderColName}" FontWeight="SemiBold" />
+                            </DataTemplate>
+                        </DataGridTextColumn.HeaderTemplate>
+                    </DataGridTextColumn>
 
                     <!-- Executable File -->
-                    <DataGridTextColumn Header="{DynamicResource SubfolderColExe}" Binding="{Binding ExecutableName}" Width="1.3*" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding ExecutableName}" Width="1.3*" IsReadOnly="True">
+                        <DataGridTextColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{DynamicResource SubfolderColExe}" FontWeight="SemiBold" />
+                            </DataTemplate>
+                        </DataGridTextColumn.HeaderTemplate>
+                    </DataGridTextColumn>
 
                     <!-- Size -->
-                    <DataGridTextColumn Header="{DynamicResource SubfolderColSize}" Binding="{Binding FormattedSize}" Width="1*" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding FormattedSize}" Width="1*" IsReadOnly="True">
+                        <DataGridTextColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{DynamicResource SubfolderColSize}" FontWeight="SemiBold" />
+                            </DataTemplate>
+                        </DataGridTextColumn.HeaderTemplate>
+                    </DataGridTextColumn>
 
                     <!-- Last Modified Date -->
-                    <DataGridTextColumn Header="{DynamicResource SubfolderColDate}" Binding="{Binding FormattedDate}" Width="1.4*" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding FormattedDate}" Width="1.4*" IsReadOnly="True">
+                        <DataGridTextColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{DynamicResource SubfolderColDate}" FontWeight="SemiBold" />
+                            </DataTemplate>
+                        </DataGridTextColumn.HeaderTemplate>
+                    </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

@@ -216,6 +216,27 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckAllUpdatesButtonText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DownloadAllUpdatesButtonText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
+                
+                foreach (var emu in Emulators)
+                {
+                    if (emu.StatusType == "Unknown")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusUnchecked", "미확인");
+                    }
+                    else if (emu.StatusType == "UpToDate")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusUpToDateRoot", "최신 (루트폴더)");
+                    }
+                    else if (emu.StatusType == "UpdateAvailable")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusUpdateAvailable", emu.LatestVersion);
+                    }
+                    else if (emu.StatusType == "CheckFailed")
+                    {
+                        emu.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
+                    }
+                }
+
                 _ = SaveSettingsToDiskAsync();
             }
         }
@@ -367,18 +388,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 }
 
                 // Initial status on load is Unchecked (미확인)
-                emulator.StatusText = "미확인";
+                emulator.StatusText = LocalizationService.GetString("StatusUnchecked", "미확인");
                 emulator.StatusType = "Unknown";
                 emulator.LatestVersion = string.Empty;
 
                 Emulators.Add(emulator);
             }
 
-            StatusMessage = Emulators.Count == 0
-                ? $"설정 파일('{Path.GetFileName(path)}')을 불러왔지만 에뮬레이터 항목이 비어 있습니다."
-                : $"설정 파일('{Path.GetFileName(path)}')을 불러왔습니다.";
+            StatusMessage = LocalizationService.GetString("LogConfigLoaded", Path.GetFileName(path));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentConfigFilePath)));
-        }, "설정을 불러오는 중입니다...");
+        }, LocalizationService.GetString("LogLoadingConfig", "설정을 불러오는 중입니다..."));
     }
 
     public async Task SaveSettingsAsync(string? targetFilePath = null)
@@ -386,8 +405,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         await ExecuteBusyOperationAsync(async () =>
         {
             await SaveSettingsToDiskAsync(targetFilePath);
-            StatusMessage = $"설정을 저장했습니다: {Path.GetFileName(CurrentConfigFilePath)}";
-        }, "설정을 저장하는 중입니다...");
+            StatusMessage = LocalizationService.GetString("LogConfigSaved", Path.GetFileName(CurrentConfigFilePath));
+        }, LocalizationService.GetString("LogSavingConfig", "설정을 저장하는 중입니다..."));
     }
 
     public async Task OpenConfigFileAsync()
@@ -944,14 +963,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             RestoreUpdateHistory(SelectedEmulator);
-            AppendLog($"전체 업데이트 확인 완료 (총 {emulators.Count}개)");
-            StatusMessage = "전체 업데이트 확인이 완료되었습니다.";
+            AppendLog(LocalizationService.GetString("LogCheckCompleted", emulators.Count));
+            StatusMessage = LocalizationService.GetString("LogCheckCompleted", emulators.Count);
             Progress = 100;
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            AppendLog("전체 업데이트 확인을 취소했습니다.");
-            StatusMessage = "전체 업데이트 확인 취소됨";
+            AppendLog(LocalizationService.GetString("LogCheckCancelled", "전체 업데이트 확인을 취소했습니다."));
+            StatusMessage = LocalizationService.GetString("LogCheckCancelled", "전체 업데이트 확인을 취소했습니다.");
         }
         catch (Exception ex)
         {
@@ -1189,14 +1208,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     Progress = 50 + (currentCompleted * 50 / emulators.Count);
                 });
 
-            AppendLog("전체 다운로드 및 압축 해제 작업이 완료되었습니다.");
-            StatusMessage = "전체 다운로드가 완료되었습니다.";
+            AppendLog(LocalizationService.GetString("LogDownloadCompleted", "전체 다운로드 및 압축 해제 작업이 완료되었습니다."));
+            StatusMessage = LocalizationService.GetString("LogDownloadCompleted", "전체 다운로드 및 압축 해제 작업이 완료되었습니다.");
             Progress = 100;
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            AppendLog("전체 다운로드를 취소했습니다.");
-            StatusMessage = "전체 다운로드 취소됨";
+            AppendLog(LocalizationService.GetString("LogDownloadCancelled", "전체 다운로드를 취소했습니다."));
+            StatusMessage = LocalizationService.GetString("LogDownloadCancelled", "전체 다운로드를 취소했습니다.");
         }
         catch (Exception ex)
         {

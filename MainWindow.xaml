@@ -444,10 +444,21 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="{DynamicResource ColEmulatorName}" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.2*" MinWidth="100" />
+                            <DataGridTextColumn Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.2*" MinWidth="100">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColEmulatorName}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
                             
                             <!-- Status Pill Badge Column -->
-                            <DataGridTemplateColumn Header="{DynamicResource ColStatus}" Width="1.6*" MinWidth="135" IsReadOnly="True">
+                            <DataGridTemplateColumn Width="1.6*" MinWidth="135" IsReadOnly="True">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColStatus}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="12" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,2">
@@ -534,9 +545,27 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="{DynamicResource ColRepository}" Binding="{Binding Repository, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2.2*" MinWidth="130" />
-                            <DataGridTextColumn Header="{DynamicResource ColInstallPath}" Binding="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
-                            <DataGridTextColumn Header="{DynamicResource ColAssetPattern}" Binding="{Binding AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110" />
+                            <DataGridTextColumn Binding="{Binding Repository, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2.2*" MinWidth="130">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColRepository}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColInstallPath}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColAssetPattern}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -676,9 +705,27 @@
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="{DynamicResource ColFileName}" Binding="{Binding AssetName}" Width="3*" />
-                            <DataGridTextColumn Header="{DynamicResource ColVersionTag}" Binding="{Binding Version}" Width="1.2*" />
-                            <DataGridTextColumn Header="{DynamicResource ColPublishDate}" Binding="{Binding PublishedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="1.5*" />
+                            <DataGridTextColumn Binding="{Binding AssetName}" Width="3*">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColFileName}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding Version}" Width="1.2*">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColVersionTag}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding PublishedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="1.5*">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{DynamicResource ColPublishDate}" FontWeight="SemiBold" />
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

@@ -90,12 +90,13 @@
     <sys:String x:Key="StatusDownloading">正在下载...</sys:String>
     <sys:String x:Key="StatusExtracting">正在解压...</sys:String>
     <sys:String x:Key="StatusCheckFailed">检查失败</sys:String>
+    <sys:String x:Key="StatusNoMatch">无匹配文件</sys:String>
     <sys:String x:Key="StatusUnchecked">未检查</sys:String>
     <sys:String x:Key="StatusNotInstalled">未安装</sys:String>
 
     <!-- Subfolder Manager Window -->
     <sys:String x:Key="SubfolderWindowTitle">版本子文件夹管理器</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 已下载版本子文件夹管理</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 [{0}] 已下载版本子文件夹管理</sys:String>
     <sys:String x:Key="SubfolderHeaderDesc">查看并清理安装目录下的历史版本子文件夹。</sys:String>
     <sys:String x:Key="SubfolderRootPath">根目录路径: {0}</sys:String>
     <sys:String x:Key="SubfolderBtnSelectAll">全选</sys:String>
@@ -109,8 +110,20 @@
     <sys:String x:Key="SubfolderStatusInitial">请勾选要删除的文件夹，然后点击 [删除所选文件夹]。</sys:String>
     <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 删除所选文件夹</sys:String>
     <sys:String x:Key="SubfolderBtnClose">关闭</sys:String>
+    <sys:String x:Key="SubfolderMsgInvalidFolder">模拟器安装目录未指定或在磁盘上不存在。</sys:String>
+    <sys:String x:Key="SubfolderMsgNotFound">未找到已下载的版本子文件夹。</sys:String>
+    <sys:String x:Key="SubfolderMsgFoundCount">共找到 {0} 个版本子文件夹。</sys:String>
+    <sys:String x:Key="SubfolderMsgProcessRunning">选中文件夹 '{0}' 中的模拟器进程 ({1}.exe) 正在运行。&#10;请先关闭模拟器后再试。</sys:String>
 
-    <!-- Messages & Dialogs -->
+    <!-- Logs & Messages -->
+    <sys:String x:Key="LogLoadingConfig">正在加载配置...</sys:String>
+    <sys:String x:Key="LogConfigLoaded">已加载配置文件 ('{0}')。</sys:String>
+    <sys:String x:Key="LogSavingConfig">正在保存配置...</sys:String>
+    <sys:String x:Key="LogConfigSaved">已保存配置: {0}</sys:String>
+    <sys:String x:Key="LogCheckCompleted">所有更新检查完成 (共 {0} 项)</sys:String>
+    <sys:String x:Key="LogCheckCancelled">已取消所有更新检查。</sys:String>
+    <sys:String x:Key="LogDownloadCompleted">所有下载及解压已完成。</sys:String>
+    <sys:String x:Key="LogDownloadCancelled">已取消全部下载。</sys:String>
     <sys:String x:Key="MsgConfirmDeleteSubfolder">确定要删除选中的 {0} 个文件夹吗？&#10;此操作无法撤销。</sys:String>
     <sys:String x:Key="MsgDeleteComplete">已成功删除选中的文件夹。</sys:String>
     <sys:String x:Key="MsgSelectFolderToDelete">请选择至少一个要删除的文件夹。</sys:String>

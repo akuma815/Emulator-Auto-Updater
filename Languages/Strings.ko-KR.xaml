@@ -90,12 +90,13 @@
     <sys:String x:Key="StatusDownloading">다운로드 중...</sys:String>
     <sys:String x:Key="StatusExtracting">압축 해제 중...</sys:String>
     <sys:String x:Key="StatusCheckFailed">조회 실패</sys:String>
+    <sys:String x:Key="StatusNoMatch">조건 맞는 파일 없음</sys:String>
     <sys:String x:Key="StatusUnchecked">미확인</sys:String>
     <sys:String x:Key="StatusNotInstalled">미설치</sys:String>
 
     <!-- Subfolder Manager Window -->
     <sys:String x:Key="SubfolderWindowTitle">하위 버전 폴더 관리자</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 다운로드된 버전 폴더 관리</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 [{0}] 다운로드된 버전 폴더 관리</sys:String>
     <sys:String x:Key="SubfolderHeaderDesc">에뮬레이터 설치 경로 하위에 보관된 구버전/신버전 개별 폴더를 확인하고 정리합니다.</sys:String>
     <sys:String x:Key="SubfolderRootPath">루트 경로: {0}</sys:String>
     <sys:String x:Key="SubfolderBtnSelectAll">전체 선택</sys:String>
@@ -109,8 +110,20 @@
     <sys:String x:Key="SubfolderStatusInitial">삭제할 폴더를 선택한 후 [선택 폴더 삭제] 버튼을 누르세요.</sys:String>
     <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ 선택 폴더 삭제</sys:String>
     <sys:String x:Key="SubfolderBtnClose">닫기</sys:String>
+    <sys:String x:Key="SubfolderMsgInvalidFolder">에뮬레이터 설치 폴더가 지정되지 않았거나 디스크에 존재하지 않습니다.</sys:String>
+    <sys:String x:Key="SubfolderMsgNotFound">다운로드된 버전 하위 폴더를 찾을 수 없습니다.</sys:String>
+    <sys:String x:Key="SubfolderMsgFoundCount">총 {0}개의 버전 하위 폴더를 찾았습니다.</sys:String>
+    <sys:String x:Key="SubfolderMsgProcessRunning">선택한 '{0}' 폴더 내의 에뮬레이터 프로세스({1}.exe)가 실행 중입니다.&#10;에뮬레이터를 종료한 후 다시 시도하세요.</sys:String>
 
-    <!-- Messages & Dialogs -->
+    <!-- Logs & Messages -->
+    <sys:String x:Key="LogLoadingConfig">설정을 불러오는 중입니다...</sys:String>
+    <sys:String x:Key="LogConfigLoaded">설정 파일('{0}')을 불러왔습니다.</sys:String>
+    <sys:String x:Key="LogSavingConfig">설정을 저장하는 중입니다...</sys:String>
+    <sys:String x:Key="LogConfigSaved">설정을 저장했습니다: {0}</sys:String>
+    <sys:String x:Key="LogCheckCompleted">전체 업데이트 확인 완료 (총 {0}개)</sys:String>
+    <sys:String x:Key="LogCheckCancelled">전체 업데이트 확인을 취소했습니다.</sys:String>
+    <sys:String x:Key="LogDownloadCompleted">전체 다운로드 및 압축 해제 작업이 완료되었습니다.</sys:String>
+    <sys:String x:Key="LogDownloadCancelled">전체 다운로드를 취소했습니다.</sys:String>
     <sys:String x:Key="MsgConfirmDeleteSubfolder">다음 선택된 {0}개 폴더를 정말로 삭제하시겠습니까?&#10;이 작업은 되돌릴 수 없습니다.</sys:String>
     <sys:String x:Key="MsgDeleteComplete">선택한 폴더가 성공적으로 삭제되었습니다.</sys:String>
     <sys:String x:Key="MsgSelectFolderToDelete">삭제할 폴더를 하나 이상 선택해주세요.</sys:String>

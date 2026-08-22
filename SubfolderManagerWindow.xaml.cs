@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using EmulatorAutoUpdater.Models;
+using EmulatorAutoUpdater.Services;
 
 namespace EmulatorAutoUpdater;
 
@@ -20,8 +21,9 @@ public partial class SubfolderManagerWindow : Window
         InitializeComponent();
         _emulator = emulator ?? throw new ArgumentNullException(nameof(emulator));
 
-        TitleTextBlock.Text = $"📁 [{_emulator.Name}] 다운로드된 버전 폴더 관리";
-        PathTextBlock.Text = $"루트 경로: {_emulator.Folder}";
+        Title = LocalizationService.GetString("SubfolderWindowTitle", "하위 버전 폴더 관리자");
+        TitleTextBlock.Text = $"📁 [{_emulator.Name}] {LocalizationService.GetString("SubfolderWindowTitle", "다운로드된 버전 폴더 관리")}";
+        PathTextBlock.Text = $"{LocalizationService.GetString("SubfolderRootPath", _emulator.Folder)}";
 
         SubfolderDataGrid.ItemsSource = SubfolderItems;
         LoadSubfolders();
@@ -33,7 +35,7 @@ public partial class SubfolderManagerWindow : Window
 
         if (string.IsNullOrWhiteSpace(_emulator.Folder) || !Directory.Exists(_emulator.Folder))
         {
-            StatusMessageTextBlock.Text = "에뮬레이터 설치 폴더가 지정되지 않았거나 디스크에 존재하지 않습니다.";
+            StatusMessageTextBlock.Text = LocalizationService.GetString("SubfolderMsgInvalidFolder", "에뮬레이터 설치 폴더가 지정되지 않았거나 디스크에 존재하지 않습니다.");
             UpdateSelectionSummary();
             return;
         }
@@ -53,7 +55,7 @@ public partial class SubfolderManagerWindow : Window
 
                 // Find executables inside top directory
                 var exeFiles = Directory.GetFiles(dir, "*.exe", SearchOption.TopDirectoryOnly);
-                var exeName = exeFiles.Length > 0 ? string.Join(", ", exeFiles.Select(Path.GetFileName)) : "없음";
+                var exeName = exeFiles.Length > 0 ? string.Join(", ", exeFiles.Select(Path.GetFileName)) : LocalizationService.GetString("TxtNone", "없음");
 
                 var sizeBytes = CalculateDirectorySize(dir);
                 var lastWrite = Directory.GetLastWriteTime(dir);
@@ -73,12 +75,12 @@ public partial class SubfolderManagerWindow : Window
             }
 
             StatusMessageTextBlock.Text = SubfolderItems.Count == 0
-                ? "다운로드된 버전 하위 폴더를 찾을 수 없습니다."
-                : $"총 {SubfolderItems.Count}개의 버전 하위 폴더를 찾았습니다.";
+                ? LocalizationService.GetString("SubfolderMsgNotFound", "다운로드된 버전 하위 폴더를 찾을 수 없습니다.")
+                : LocalizationService.GetString("SubfolderMsgFoundCount", SubfolderItems.Count);
         }
         catch (Exception ex)
         {
-            StatusMessageTextBlock.Text = $"폴더 스캔 중 오류 발생: {ex.Message}";
+            StatusMessageTextBlock.Text = $"Error: {ex.Message}";
         }
 
         UpdateSelectionSummary();
@@ -98,7 +100,7 @@ public partial class SubfolderManagerWindow : Window
         var selectedCount = selectedItems.Count;
         var totalBytes = selectedItems.Sum(i => i.SizeBytes);
 
-        SelectionSummaryTextBlock.Text = $"선택됨: {selectedCount}개 폴더 ({FormatBytes(totalBytes)})";
+        SelectionSummaryTextBlock.Text = LocalizationService.GetString("SubfolderSelectionSummary", selectedCount, FormatBytes(totalBytes));
         DeleteSelectedButton.IsEnabled = selectedCount > 0;
     }
 
@@ -128,7 +130,7 @@ public partial class SubfolderManagerWindow : Window
         var selectedItems = SubfolderItems.Where(i => i.IsSelected).ToList();
         if (selectedItems.Count == 0)
         {
-            System.Windows.MessageBox.Show("삭제할 하위 폴더를 선택하세요.", "알림", MessageBoxButton.OK, MessageBoxImage.Information);
+            System.Windows.MessageBox.Show(LocalizationService.GetString("MsgSelectFolderToDelete", "삭제할 폴더를 하나 이상 선택해주세요."), "Notice", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -138,8 +140,8 @@ public partial class SubfolderManagerWindow : Window
             if (IsFolderProcessRunning(item.FullPath, out var runningExe))
             {
                 System.Windows.MessageBox.Show(
-                    $"선택한 '{item.FolderName}' 폴더 내의 에뮬레이터 프로세스({runningExe}.exe)가 실행 중입니다.\n에뮬레이터를 종료한 후 다시 시도하세요.",
-                    "프로세스 실행 중 경고",
+                    LocalizationService.GetString("SubfolderMsgProcessRunning", item.FolderName, runningExe),
+                    "Warning",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 return;
@@ -148,8 +150,8 @@ public partial class SubfolderManagerWindow : Window
 
         var totalBytes = selectedItems.Sum(i => i.SizeBytes);
         var confirmResult = System.Windows.MessageBox.Show(
-            $"선택한 {selectedItems.Count}개의 버전 폴더를 삭제하시겠습니까?\n\n- 대상 폴더: {string.Join(", ", selectedItems.Select(i => i.FolderName))}\n- 예상 확보 용량: {FormatBytes(totalBytes)}\n\n※ 삭제된 폴더는 복구할 수 없습니다.",
-            "하위 폴더 영구 삭제 확인",
+            LocalizationService.GetString("MsgConfirmDeleteSubfolder", selectedItems.Count),
+            "Confirm",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
 
@@ -171,15 +173,13 @@ public partial class SubfolderManagerWindow : Window
             catch (Exception ex)
             {
                 failCount++;
-                StatusMessageTextBlock.Text = $"'{item.FolderName}' 삭제 실패: {ex.Message}";
+                StatusMessageTextBlock.Text = $"'{item.FolderName}' Error: {ex.Message}";
             }
         }
 
         System.Windows.MessageBox.Show(
-            failCount == 0
-                ? $"{successCount}개의 하위 폴더를 성공적으로 삭제했습니다."
-                : $"{successCount}개 삭제 성공, {failCount}개 삭제 실패하였습니다.",
-            "삭제 완료",
+            LocalizationService.GetString("MsgDeleteComplete", "선택한 폴더가 성공적으로 삭제되었습니다."),
+            "Done",
             MessageBoxButton.OK,
             failCount == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
 

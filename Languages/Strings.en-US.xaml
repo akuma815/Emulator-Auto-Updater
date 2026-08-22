@@ -90,12 +90,13 @@
     <sys:String x:Key="StatusDownloading">Downloading...</sys:String>
     <sys:String x:Key="StatusExtracting">Extracting...</sys:String>
     <sys:String x:Key="StatusCheckFailed">Check Failed</sys:String>
+    <sys:String x:Key="StatusNoMatch">No Matching Asset</sys:String>
     <sys:String x:Key="StatusUnchecked">Unchecked</sys:String>
     <sys:String x:Key="StatusNotInstalled">Not Installed</sys:String>
 
     <!-- Subfolder Manager Window -->
     <sys:String x:Key="SubfolderWindowTitle">Version Subfolder Manager</sys:String>
-    <sys:String x:Key="SubfolderHeaderTitle">📁 Downloaded Version Subfolder Manager</sys:String>
+    <sys:String x:Key="SubfolderHeaderTitle">📁 [{0}] Downloaded Version Subfolder Manager</sys:String>
     <sys:String x:Key="SubfolderHeaderDesc">Inspect and clean up old/new version subfolders stored in the emulator directory.</sys:String>
     <sys:String x:Key="SubfolderRootPath">Root Path: {0}</sys:String>
     <sys:String x:Key="SubfolderBtnSelectAll">Select All</sys:String>
@@ -109,8 +110,20 @@
     <sys:String x:Key="SubfolderStatusInitial">Select folders to delete and click [Delete Selected].</sys:String>
     <sys:String x:Key="SubfolderBtnDeleteSelected">🗑️ Delete Selected</sys:String>
     <sys:String x:Key="SubfolderBtnClose">Close</sys:String>
+    <sys:String x:Key="SubfolderMsgInvalidFolder">Emulator installation folder is not specified or does not exist on disk.</sys:String>
+    <sys:String x:Key="SubfolderMsgNotFound">No downloaded version subfolders found.</sys:String>
+    <sys:String x:Key="SubfolderMsgFoundCount">Found {0} version subfolder(s).</sys:String>
+    <sys:String x:Key="SubfolderMsgProcessRunning">The emulator process ({1}.exe) in folder '{0}' is currently running.&#10;Please close it and try again.</sys:String>
 
-    <!-- Messages & Dialogs -->
+    <!-- Logs & Messages -->
+    <sys:String x:Key="LogLoadingConfig">Loading configuration...</sys:String>
+    <sys:String x:Key="LogConfigLoaded">Loaded configuration file ('{0}').</sys:String>
+    <sys:String x:Key="LogSavingConfig">Saving configuration...</sys:String>
+    <sys:String x:Key="LogConfigSaved">Configuration saved: {0}</sys:String>
+    <sys:String x:Key="LogCheckCompleted">Check for updates completed (Total {0}).</sys:String>
+    <sys:String x:Key="LogCheckCancelled">Check for updates was cancelled.</sys:String>
+    <sys:String x:Key="LogDownloadCompleted">All downloads and extractions completed.</sys:String>
+    <sys:String x:Key="LogDownloadCancelled">Download was cancelled.</sys:String>
     <sys:String x:Key="MsgConfirmDeleteSubfolder">Are you sure you want to delete the selected {0} folder(s)?&#10;This action cannot be undone.</sys:String>
     <sys:String x:Key="MsgDeleteComplete">Selected folder(s) have been deleted successfully.</sys:String>
     <sys:String x:Key="MsgSelectFolderToDelete">Please select at least one folder to delete.</sys:String>
