@@ -1351,16 +1351,50 @@ public sealed class GitHubReleaseService
     {
         if (string.IsNullOrWhiteSpace(v)) return false;
 
-        var clean = v.Trim().TrimStart('v', 'V');
+        var clean = v.Trim().TrimStart('v', 'V').Trim();
         if (string.IsNullOrWhiteSpace(clean)) return false;
 
         var lower = clean.ToLowerInvariant();
-        if (lower is "latest" or "nightly" or "dev" or "canary" or "builds" or "main" or "master" or "release" or "unknown" or "x64" or "win64" or "x86" or "amd64" or "arm64" or "windows")
+
+        var rollingKeywords = new[]
+        {
+            "latest", "nightly", "dev", "devel", "development", "canary", "preview",
+            "builds", "build", "main", "master", "release", "releases", "continuous",
+            "rolling", "snapshot", "test", "testing", "experimental", "staging",
+            "unknown", "x64", "win64", "x86", "amd64", "arm64", "windows", "linux", "macos"
+        };
+
+        if (rollingKeywords.Contains(lower))
         {
             return false;
         }
 
-        return Regex.IsMatch(clean, @"[0-9a-fA-F]");
+        foreach (var keyword in rollingKeywords)
+        {
+            if (lower.StartsWith($"{keyword}-") || lower.EndsWith($"-{keyword}") ||
+                lower.StartsWith($"{keyword}_") || lower.EndsWith($"_{keyword}"))
+            {
+                var stripped = lower.Replace(keyword, "").Trim('-', '_', ' ');
+                if (!Regex.IsMatch(stripped, @"\d"))
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Must contain at least one decimal digit [0-9] (e.g. 1.0, 2026-08-28, 4074, 982f26a)
+        // OR be a 7-40 length valid git commit hex string
+        if (Regex.IsMatch(clean, @"\d"))
+        {
+            return true;
+        }
+
+        if (clean.Length >= 7 && clean.Length <= 40 && Regex.IsMatch(clean, @"^[0-9a-fA-F]+$"))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static string? ExtractRealVersionNumber(string assetName)

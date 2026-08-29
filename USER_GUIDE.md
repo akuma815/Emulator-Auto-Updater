@@ -38,7 +38,7 @@
 - ⚡ **최대 10개 병렬 조회 및 다운로드**: 모든 에뮬레이터의 최신 업데이트를 하나씩 기다릴 필요 없이 동시 병렬 확인 및 동시 다운로드.
 - 🚀 **8분할 고속 병렬 다운로드 엔진**: HTTP Range 요청 헤더를 활용해 5MB 이상의 대용량 아티팩트를 8개 커넥션으로 분할 다운로드하여 기존 속도 대비 8~10배 이상 초고속 다운로드 (Azure Blob / GitHub CDN / nightly.link 지원).
 - 🔓 **GitHub API Rate Limit 우회 & 봇 보호 해제**: GitHub REST API 호출 횟수 제한(60회/시간) 도달 시 웹 HTML 우회 파서(`expanded_assets`)로 자동 전환되며, `/releases/latest` 리다이렉트 우선 조회 엔진으로 RPCS3, PCSX2 나이트리 등 최신 빌드를 100% 정확하게 수신합니다.
-- 📅 **버전 미표시 파일 게시 일자 추적 Engine**: 파일명이나 태그에 별도의 버전 번호가 없는 고정 파일명(예: `BizHawk-dev-windows.zip`, `Flycast-win64.zip`, `desmume-win-x64.zip`, `Mesen.zip` 등)은 **게시 일시(`yyyy-MM-dd HH:mm`)를 버전으로 자동 생성 및 관리**합니다. 사전 조회 없이 바로 `[다운로드]`를 누르더라도 정확한 커밋/릴리즈 타임스탬프를 읽어와 기록합니다.
+- 📅 **고정 태그 및 버전 미표시 파일 게시 일자 추적 Engine**: 태그명이 항상 동일하게 고정된 에뮬레이터(예: Duckstation의 `preview`, Citron의 `nightly-windows`, `latest`, `nightly` 등)나 파일명에 버전 번호가 없는 고정 파일명은 단순 태그명 일치로 인한 최신 버전 오탐을 완벽히 방지하고 **게시 일시(`yyyy-MM-dd HH:mm`) 및 마지막 다운로드 타임스탬프를 기준으로 최신 빌드 여부를 정밀 판정**합니다.
 - 🪄 **스마트 Asset Pattern 자동 변환기**: 정규식을 몰라도 예시 파일명(예: `PPSSPPWindows64_1.17.1.zip`)을 입력하고 `[패턴 자동 변환]`을 누르면 완벽한 정규식으로 자동 전환.
 - 📁 **완벽한 포터블(Portable) 설정 지원**: 실행 폴더 내 `config.json`을 우선적으로 읽어오며, 필요 시 다른 이름으로 설정 저장 및 불러오기 가능.
 

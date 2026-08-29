@@ -2653,6 +2653,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var inst = installed.Trim();
         var latest = latestVersion.Trim();
 
+        // If either installed or latest is not a real version tag (e.g. rolling tag like preview, nightly),
+        // version string equality cannot be trusted and we must fall back to date-based comparison!
+        if (!GitHubReleaseService.IsValidVersionTag(inst) || !GitHubReleaseService.IsValidVersionTag(latest))
+        {
+            return false;
+        }
+
         // 1. Exact match
         if (string.Equals(inst, latest, StringComparison.OrdinalIgnoreCase))
         {

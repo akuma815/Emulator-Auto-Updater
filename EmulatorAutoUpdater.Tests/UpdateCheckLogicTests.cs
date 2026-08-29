@@ -24,6 +24,11 @@ public class UpdateCheckLogicTests
     [InlineData("latest", false)]
     [InlineData("nightly", false)]
     [InlineData("dev", false)]
+    [InlineData("preview", false)]
+    [InlineData("nightly-windows", false)]
+    [InlineData("preview-release", false)]
+    [InlineData("rolling", false)]
+    [InlineData("continuous", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
     public void IsValidVersionTag_ReturnsExpectedResult(string? tag, bool expected)
@@ -47,11 +52,17 @@ public class UpdateCheckLogicTests
     }
 
     [Fact]
-    public void ResolveVersion_FallsBackToDateOnlyWhenNoValidTag()
+    public void ResolveVersion_FallsBackToDateOnlyWhenNoValidTagOrRollingTag()
     {
-        var date = new DateTimeOffset(2026, 7, 26, 10, 16, 0, TimeSpan.FromHours(9));
-        var resolved = GitHubReleaseService.ResolveVersion("BizHawk-dev-windows.zip", "BizHawk-dev-windows.zip", date);
-        Assert.Equal("2026-07-26 10:16", resolved);
+        var date = new DateTimeOffset(2026, 8, 28, 16, 16, 0, TimeSpan.FromHours(9));
+        var resolvedBizHawk = GitHubReleaseService.ResolveVersion("BizHawk-dev-windows.zip", "BizHawk-dev-windows.zip", date);
+        Assert.Equal("2026-08-28 16:16", resolvedBizHawk);
+
+        var resolvedDuckstation = GitHubReleaseService.ResolveVersion("preview", "duckstation-windows-x64-release.zip", date);
+        Assert.Equal("2026-08-28 16:16", resolvedDuckstation);
+
+        var resolvedCitron = GitHubReleaseService.ResolveVersion("nightly-windows", "Citron-windows-nightly-x64-clang-cl.zip", date);
+        Assert.Equal("2026-08-28 16:16", resolvedCitron);
     }
 
     [Theory]
