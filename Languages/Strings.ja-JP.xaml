@@ -35,6 +35,9 @@
 
     <!-- Left Pane: Emulator List DataGrid -->
     <sys:String x:Key="HeaderEmulatorList">📋 登録済みエミュレータ一覧</sys:String>
+    <sys:String x:Key="ColOpenFolder">開く</sys:String>
+    <sys:String x:Key="TipOpenFolder">エミュレータのインストールフォルダをエクスプローラーで開きます。</sys:String>
+    <sys:String x:Key="TipBrowseFolder">インストールフォルダの参照/選択</sys:String>
     <sys:String x:Key="ColEmulatorName">エミュレータ名</sys:String>
     <sys:String x:Key="ColStatus">状態</sys:String>
     <sys:String x:Key="ColRepository">リポジトリ / URL</sys:String>
@@ -42,6 +45,10 @@
     <sys:String x:Key="ColAssetPattern">アセットパターン (正規表現)</sys:String>
     <sys:String x:Key="MenuManageSubfolders">📁 バージョン別サブフォルダの管理...</sys:String>
     <sys:String x:Key="TipManageSubfolders">エミュレータのサブフォルダ一覧を表示し、不要なバージョンを削除します。</sys:String>
+    <sys:String x:Key="StatusFolderSelected">[{0}] フォルダを選択しました: {1}</sys:String>
+    <sys:String x:Key="StatusFolderOpened">[{0}] インストールフォルダを開きました: {1}</sys:String>
+    <sys:String x:Key="MsgFolderNotConfigured">[{0}] インストールフォルダが設定されていません。</sys:String>
+    <sys:String x:Key="MsgOpenFolderFailed">[{0}] フォルダを開けませんでした: {1}</sys:String>
 
     <!-- Right Pane: Selected Emulator Details -->
     <sys:String x:Key="HeaderEmulatorDetail">⚙️ 選択中のエミュレータ情報と操作</sys:String>

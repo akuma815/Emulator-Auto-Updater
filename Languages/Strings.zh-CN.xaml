@@ -35,6 +35,9 @@
 
     <!-- Left Pane: Emulator List DataGrid -->
     <sys:String x:Key="HeaderEmulatorList">📋 已注册模拟器列表</sys:String>
+    <sys:String x:Key="ColOpenFolder">打开</sys:String>
+    <sys:String x:Key="TipOpenFolder">在文件资源管理器中打开模拟器安装文件夹。</sys:String>
+    <sys:String x:Key="TipBrowseFolder">浏览/选择安装文件夹</sys:String>
     <sys:String x:Key="ColEmulatorName">模拟器名称</sys:String>
     <sys:String x:Key="ColStatus">状态</sys:String>
     <sys:String x:Key="ColRepository">仓库 / URL</sys:String>
@@ -42,6 +45,10 @@
     <sys:String x:Key="ColAssetPattern">资源匹配模式 (正则)</sys:String>
     <sys:String x:Key="MenuManageSubfolders">📁 管理版本子文件夹...</sys:String>
     <sys:String x:Key="TipManageSubfolders">查看并批量删除该模拟器历史下载的版本子文件夹。</sys:String>
+    <sys:String x:Key="StatusFolderSelected">[{0}] 已选择文件夹：{1}</sys:String>
+    <sys:String x:Key="StatusFolderOpened">[{0}] 已打开安装文件夹：{1}</sys:String>
+    <sys:String x:Key="MsgFolderNotConfigured">[{0}] 未配置安装文件夹。</sys:String>
+    <sys:String x:Key="MsgOpenFolderFailed">[{0}] 打开文件夹失败：{1}</sys:String>
 
     <!-- Right Pane: Selected Emulator Details -->
     <sys:String x:Key="HeaderEmulatorDetail">⚙️ 选中模拟器信息与控制</sys:String>

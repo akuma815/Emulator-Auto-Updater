@@ -294,7 +294,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Emulator Auto Updater" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" />
                         <Border Background="#4F46E5" CornerRadius="10" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="v1.3.0" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                            <TextBlock Text="v1.4.0" Foreground="White" FontSize="11" FontWeight="SemiBold" />
                         </Border>
                     </StackPanel>
                     <TextBlock Text="{DynamicResource AppSubtitle}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,1,0,0" />
@@ -444,6 +444,31 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
+                            <!-- Open Folder Action Column -->
+                            <DataGridTemplateColumn Width="42" MinWidth="42" MaxWidth="48" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="📁" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{DynamicResource TipOpenFolder}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.OpenEmulatorFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{DynamicResource TipOpenFolder}"
+                                                Cursor="Hand"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="0"
+                                                Margin="0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="📁" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
                             <DataGridTextColumn Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.2*" MinWidth="100">
                                 <DataGridTextColumn.HeaderTemplate>
                                     <DataTemplate>
@@ -552,13 +577,40 @@
                                     </DataTemplate>
                                 </DataGridTextColumn.HeaderTemplate>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110">
-                                <DataGridTextColumn.HeaderTemplate>
+
+                            <!-- Install Path Column with Browse Button -->
+                            <DataGridTemplateColumn Width="1.8*" MinWidth="140">
+                                <DataGridTemplateColumn.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{DynamicResource ColInstallPath}" FontWeight="SemiBold" />
                                     </DataTemplate>
-                                </DataGridTextColumn.HeaderTemplate>
-                            </DataGridTextColumn>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="2,0" VerticalAlignment="Center">
+                                            <Button DockPanel.Dock="Right"
+                                                    Command="{Binding DataContext.BrowseFolderForEmulatorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="{DynamicResource TipBrowseFolder}"
+                                                    Cursor="Hand"
+                                                    Background="#F1F5F9"
+                                                    BorderBrush="#CBD5E1"
+                                                    BorderThickness="1"
+                                                    Padding="5,1"
+                                                    Margin="4,0,0,0"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="📂" FontSize="11" VerticalAlignment="Center" />
+                                            </Button>
+                                            <TextBox Text="{Binding Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     VerticalAlignment="Center"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Padding="2,0" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
                             <DataGridTextColumn Binding="{Binding AssetPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.8*" MinWidth="110">
                                 <DataGridTextColumn.HeaderTemplate>
                                     <DataTemplate>

@@ -24,7 +24,20 @@ public static class LocalizationService
 
     public static void Initialize(string? preferredLanguageCode = null)
     {
-        var targetCode = NormalizeLanguageCode(preferredLanguageCode);
+        string targetCode;
+        if (string.IsNullOrWhiteSpace(preferredLanguageCode))
+        {
+            var osCulture = CultureInfo.CurrentUICulture.Name;
+            var osMatch = SupportedLanguages.FirstOrDefault(l =>
+                l.Code.Equals(osCulture, StringComparison.OrdinalIgnoreCase) ||
+                l.Code.StartsWith(osCulture.Split('-')[0], StringComparison.OrdinalIgnoreCase));
+            targetCode = osMatch?.Code ?? "ko-KR";
+        }
+        else
+        {
+            targetCode = NormalizeLanguageCode(preferredLanguageCode);
+        }
+
         SetLanguage(targetCode);
     }
 
@@ -84,12 +97,6 @@ public static class LocalizationService
             if (match != null) return match.Code;
         }
 
-        // Try OS UI culture
-        var osCulture = CultureInfo.CurrentUICulture.Name;
-        var osMatch = SupportedLanguages.FirstOrDefault(l =>
-            l.Code.Equals(osCulture, StringComparison.OrdinalIgnoreCase) ||
-            l.Code.StartsWith(osCulture.Split('-')[0], StringComparison.OrdinalIgnoreCase));
-
-        return osMatch?.Code ?? "ko-KR";
+        return "ko-KR";
     }
 }

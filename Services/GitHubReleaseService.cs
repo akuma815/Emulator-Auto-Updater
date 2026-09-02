@@ -260,6 +260,11 @@ public sealed class GitHubReleaseService
             return false;
         }
 
+        if (string.Equals(uri.Host, "builds.ppsspp.org", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return (string.Equals(uri.Host, "www.ppsspp.org", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(uri.Host, "ppsspp.org", StringComparison.OrdinalIgnoreCase))
                && uri.AbsolutePath.StartsWith("/devbuilds", StringComparison.OrdinalIgnoreCase);
@@ -655,24 +660,26 @@ public sealed class GitHubReleaseService
             return null;
         }
 
-        var latest = history.FirstOrDefault(entry => entry.Builds != null && entry.Builds.Count > 0)
-                     ?? history.First();
-
-        var assets = CreatePpssppAssets(latest);
-        if (assets.Count == 0)
+        foreach (var entry in history)
         {
-            return null;
+            var assets = CreatePpssppAssets(entry);
+            if (assets.Count == 0)
+            {
+                continue;
+            }
+
+            return new GitHubRelease
+            {
+                TagName = entry.Description ?? entry.HashShort ?? string.Empty,
+                Name = entry.Description ?? entry.HashShort ?? string.Empty,
+                Body = entry.Message ?? string.Empty,
+                PublishedAt = ParseDateTimeOffset(entry.Date),
+                FetchSource = "PPSSPP Devbuild Web",
+                Assets = assets.ToList()
+            };
         }
 
-        return new GitHubRelease
-        {
-            TagName = latest.Description ?? latest.HashShort ?? string.Empty,
-            Name = latest.Description ?? latest.HashShort ?? string.Empty,
-            Body = latest.Message ?? string.Empty,
-            PublishedAt = ParseDateTimeOffset(latest.Date),
-            FetchSource = "PPSSPP Devbuild Web",
-            Assets = assets.ToList()
-        };
+        return null;
     }
 
     private static IReadOnlyList<GitHubAsset> CreatePpssppAssets(PpssppHistoryEntry entry)
@@ -1601,90 +1608,10 @@ public sealed class GitHubReleaseService
             try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
         }
 
-        // 1. Primary: Scrape https://github.com/{owner}/{repo}/releases (Contains all latest releases & prereleases in chronological order)
-        try
-        {
-            var htmlUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases";
-            using var request = new HttpRequestMessage(HttpMethod.Get, htmlUrl);
-            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+        var candidates = new List<GitHubRelease>();
+        var seenTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (response.IsSuccessStatusCode)
-            {
-                var html = await response.Content.ReadAsStringAsync(cancellationToken);
-                var tagMatches = Regex.Matches(html, $@"{info.Owner}/{info.Repo}/releases/tag/(?<tag>[^""'/\s?#]+)", RegexOptions.IgnoreCase);
-                var timeMatches = Regex.Matches(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
-
-                if (tagMatches.Count > 0)
-                {
-                    var seenTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    var releaseEntries = new List<(string Tag, DateTimeOffset Date)>();
-
-                    int timeIdx = 0;
-                    foreach (Match m in tagMatches)
-                    {
-                        var tag = WebUtility.HtmlDecode(m.Groups["tag"].Value);
-                        if (seenTags.Add(tag))
-                        {
-                            var releaseDate = DateTimeOffset.MinValue;
-                            if (timeIdx < timeMatches.Count &&
-                                DateTimeOffset.TryParse(timeMatches[timeIdx].Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedDate))
-                            {
-                                releaseDate = parsedDate;
-                            }
-                            timeIdx++;
-                            releaseEntries.Add((tag, releaseDate));
-                        }
-                    }
-
-                    GitHubRelease? fallbackRelease = null;
-
-                    foreach (var (tagName, releaseDate) in releaseEntries)
-                    {
-                        var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
-                        var candidateRelease = new GitHubRelease
-                        {
-                            TagName = tagName,
-                            Name = $"Release {tagName}",
-                            Body = $"GitHub Release {tagName} (Web Parsing - Release Page).",
-                            PublishedAt = releaseDate > DateTimeOffset.MinValue ? releaseDate.ToLocalTime() : DateTimeOffset.MinValue,
-                            FetchSource = "Web (Release Page)",
-                            Assets = assets
-                        };
-
-                        fallbackRelease ??= candidateRelease;
-
-                        if (patternRegex != null)
-                        {
-                            if (assets.Any(a => patternRegex.IsMatch(a.Name)))
-                            {
-                                return candidateRelease;
-                            }
-                        }
-                        else if (assets.Count > 0)
-                        {
-                            return candidateRelease;
-                        }
-                    }
-
-                    if (fallbackRelease != null)
-                    {
-                        return fallbackRelease;
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            // Fallback to /releases/latest redirect
-        }
-
-        // 2. Secondary fallback: Try GET https://github.com/{owner}/{repo}/releases/latest with HTTP redirect
+        // 1. Check https://github.com/{owner}/{repo}/releases/latest (Official Latest Release with 302 Redirect)
         try
         {
             var latestUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases/latest";
@@ -1710,11 +1637,11 @@ public sealed class GitHubReleaseService
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(tagName))
+                if (!string.IsNullOrWhiteSpace(tagName) && seenTags.Add(tagName))
                 {
                     var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
                     var parsedDate = ParseHtmlPublishedDate(html);
-                    return new GitHubRelease
+                    candidates.Add(new GitHubRelease
                     {
                         TagName = tagName,
                         Name = $"Release {tagName}",
@@ -1722,7 +1649,7 @@ public sealed class GitHubReleaseService
                         PublishedAt = parsedDate > DateTimeOffset.MinValue ? parsedDate.ToLocalTime() : DateTimeOffset.MinValue,
                         FetchSource = "Web (Latest Redirect)",
                         Assets = assets
-                    };
+                    });
                 }
             }
         }
@@ -1734,7 +1661,96 @@ public sealed class GitHubReleaseService
         {
         }
 
-        return null;
+        // 2. Scrape https://github.com/{owner}/{repo}/releases (Contains all latest releases & prereleases in chronological order)
+        try
+        {
+            var htmlUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases";
+            using var request = new HttpRequestMessage(HttpMethod.Get, htmlUrl);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                var tagMatches = Regex.Matches(html, $@"{info.Owner}/{info.Repo}/releases/tag/(?<tag>[^""'/\s?#]+)", RegexOptions.IgnoreCase);
+                var timeMatches = Regex.Matches(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
+
+                var orderedTags = new List<string>();
+                foreach (Match m in tagMatches)
+                {
+                    var tag = WebUtility.HtmlDecode(m.Groups["tag"].Value);
+                    if (!orderedTags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                    {
+                        orderedTags.Add(tag);
+                    }
+                }
+
+                var releaseDates = new List<DateTimeOffset>();
+                foreach (Match m in timeMatches)
+                {
+                    if (DateTimeOffset.TryParse(m.Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedDate))
+                    {
+                        releaseDates.Add(parsedDate);
+                    }
+                    else
+                    {
+                        releaseDates.Add(DateTimeOffset.MinValue);
+                    }
+                }
+
+                for (int i = 0; i < orderedTags.Count && i < 10; i++)
+                {
+                    var tagName = orderedTags[i];
+                    if (!seenTags.Add(tagName))
+                    {
+                        continue;
+                    }
+
+                    var releaseDate = i < releaseDates.Count ? releaseDates[i] : DateTimeOffset.MinValue;
+                    var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
+
+                    candidates.Add(new GitHubRelease
+                    {
+                        TagName = tagName,
+                        Name = $"Release {tagName}",
+                        Body = $"GitHub Release {tagName} (Web Parsing - Release Page).",
+                        PublishedAt = releaseDate > DateTimeOffset.MinValue ? releaseDate.ToLocalTime() : DateTimeOffset.MinValue,
+                        FetchSource = "Web (Release Page)",
+                        Assets = assets
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        // Filter and choose best candidate
+        IEnumerable<GitHubRelease> filtered = candidates;
+        if (patternRegex != null)
+        {
+            var matching = candidates.Where(c => c.Assets.Any(a => patternRegex.IsMatch(a.Name))).ToList();
+            if (matching.Count > 0)
+            {
+                filtered = matching;
+            }
+        }
+
+        var best = filtered
+            .OrderByDescending(r => r.PublishedAt)
+            .FirstOrDefault();
+
+        return best ?? candidates[0];
     }
 
     private static DateTimeOffset ParseHtmlPublishedDate(string html)

@@ -61,6 +61,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OpenConfigFileCommand = new RelayCommand(async _ => await OpenConfigFileAsync(), _ => !IsBusy && _activeDownloads.Count == 0);
         SaveConfigFileAsCommand = new RelayCommand(async _ => await SaveConfigFileAsAsync(), _ => !IsBusy);
         BrowseFolderCommand = new RelayCommand(_ => BrowseFolder(), _ => SelectedEmulator != null && !IsBusy && !IsEmulatorDownloading(SelectedEmulator) && !IsEmulatorChecking(SelectedEmulator));
+        BrowseFolderForEmulatorCommand = new RelayCommand(param => BrowseFolderForEmulator(param as EmulatorConfig), param => (param as EmulatorConfig ?? SelectedEmulator) != null && !IsBusy);
+        OpenEmulatorFolderCommand = new RelayCommand(param => OpenEmulatorFolder(param as EmulatorConfig), param => (param as EmulatorConfig ?? SelectedEmulator) != null);
         CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync(), _ => SelectedEmulator != null && !IsBusy && !IsEmulatorChecking(SelectedEmulator));
         CheckAllUpdatesCommand = new RelayCommand(
             async _ => await CheckAllUpdatesAsync(),
@@ -89,6 +91,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand OpenConfigFileCommand { get; }
     public RelayCommand SaveConfigFileAsCommand { get; }
     public RelayCommand BrowseFolderCommand { get; }
+    public RelayCommand BrowseFolderForEmulatorCommand { get; }
+    public RelayCommand OpenEmulatorFolderCommand { get; }
     public RelayCommand CheckUpdatesCommand { get; }
     public RelayCommand CheckAllUpdatesCommand { get; }
     public RelayCommand DownloadAllUpdatesCommand { get; }
@@ -2606,7 +2610,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void BrowseFolder()
     {
-        if (SelectedEmulator == null)
+        BrowseFolderForEmulator(SelectedEmulator);
+    }
+
+    public void BrowseFolderForEmulator(EmulatorConfig? emulator = null)
+    {
+        var target = emulator ?? SelectedEmulator;
+        if (target == null)
         {
             return;
         }
@@ -2614,8 +2624,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var folder = _openFolderPicker();
         if (!string.IsNullOrWhiteSpace(folder))
         {
-            SelectedEmulator.Folder = folder;
-            StatusMessage = "폴더 경로를 선택했습니다.";
+            target.Folder = folder;
+            StatusMessage = LocalizationService.GetString("StatusFolderSelected", target.Name, folder);
+        }
+    }
+
+    public void OpenEmulatorFolder(EmulatorConfig? emulator = null)
+    {
+        var target = emulator ?? SelectedEmulator;
+        if (target == null)
+        {
+            return;
+        }
+
+        var folder = target.Folder?.Trim();
+        if (string.IsNullOrWhiteSpace(folder))
+        {
+            StatusMessage = LocalizationService.GetString("MsgFolderNotConfigured", target.Name);
+            return;
+        }
+
+        try
+        {
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = folder,
+                UseShellExecute = true
+            });
+            StatusMessage = LocalizationService.GetString("StatusFolderOpened", target.Name, folder);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = LocalizationService.GetString("MsgOpenFolderFailed", target.Name, ex.Message);
         }
     }
 
@@ -2921,6 +2966,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ApplySelectedAssetToPatternCommand.RaiseCanExecuteChanged();
             ExcludeSelectedAssetFromPatternCommand.RaiseCanExecuteChanged();
             BrowseFolderCommand.RaiseCanExecuteChanged();
+            BrowseFolderForEmulatorCommand.RaiseCanExecuteChanged();
+            OpenEmulatorFolderCommand.RaiseCanExecuteChanged();
             CheckUpdatesCommand.RaiseCanExecuteChanged();
             CheckAllUpdatesCommand.RaiseCanExecuteChanged();
             DownloadAllUpdatesCommand.RaiseCanExecuteChanged();

@@ -35,6 +35,9 @@
 
     <!-- Left Pane: Emulator List DataGrid -->
     <sys:String x:Key="HeaderEmulatorList">📋 Registered Emulators</sys:String>
+    <sys:String x:Key="ColOpenFolder">Open</sys:String>
+    <sys:String x:Key="TipOpenFolder">Open emulator installation folder in File Explorer.</sys:String>
+    <sys:String x:Key="TipBrowseFolder">Browse/Select installation folder</sys:String>
     <sys:String x:Key="ColEmulatorName">Emulator Name</sys:String>
     <sys:String x:Key="ColStatus">Status</sys:String>
     <sys:String x:Key="ColRepository">Repository / URL</sys:String>
@@ -42,6 +45,10 @@
     <sys:String x:Key="ColAssetPattern">Asset Pattern (Regex)</sys:String>
     <sys:String x:Key="MenuManageSubfolders">📁 Manage Version Subfolders...</sys:String>
     <sys:String x:Key="TipManageSubfolders">View and delete downloaded version subfolders for this emulator.</sys:String>
+    <sys:String x:Key="StatusFolderSelected">[{0}] Folder selected: {1}</sys:String>
+    <sys:String x:Key="StatusFolderOpened">[{0}] Opened folder: {1}</sys:String>
+    <sys:String x:Key="MsgFolderNotConfigured">[{0}] Installation folder is not configured.</sys:String>
+    <sys:String x:Key="MsgOpenFolderFailed">[{0}] Failed to open folder: {1}</sys:String>
 
     <!-- Right Pane: Selected Emulator Details -->
     <sys:String x:Key="HeaderEmulatorDetail">⚙️ Selected Emulator Info &amp; Controls</sys:String>

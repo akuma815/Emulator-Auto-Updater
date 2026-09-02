@@ -35,6 +35,9 @@
 
     <!-- Left Pane: Emulator List DataGrid -->
     <sys:String x:Key="HeaderEmulatorList">📋 등록된 에뮬레이터 목록</sys:String>
+    <sys:String x:Key="ColOpenFolder">열기</sys:String>
+    <sys:String x:Key="TipOpenFolder">에뮬레이터 설치 폴더를 파일 탐색기에서 엽니다.</sys:String>
+    <sys:String x:Key="TipBrowseFolder">설치 폴더 찾기/선택</sys:String>
     <sys:String x:Key="ColEmulatorName">에뮬레이터 이름</sys:String>
     <sys:String x:Key="ColStatus">상태</sys:String>
     <sys:String x:Key="ColRepository">Repository / URL</sys:String>
@@ -42,6 +45,10 @@
     <sys:String x:Key="ColAssetPattern">Asset Pattern (정규식)</sys:String>
     <sys:String x:Key="MenuManageSubfolders">📁 다운로드된 버전 폴더 관리...</sys:String>
     <sys:String x:Key="TipManageSubfolders">선택한 에뮬레이터의 하위 저장 폴더 목록을 조회하고 다중 선택하여 삭제합니다.</sys:String>
+    <sys:String x:Key="StatusFolderSelected">[{0}] 폴더 경로를 선택했습니다: {1}</sys:String>
+    <sys:String x:Key="StatusFolderOpened">[{0}] 설치 폴더를 열었습니다: {1}</sys:String>
+    <sys:String x:Key="MsgFolderNotConfigured">[{0}] 설치 폴더가 지정되지 않았습니다.</sys:String>
+    <sys:String x:Key="MsgOpenFolderFailed">[{0}] 폴더 열기 실패: {1}</sys:String>
 
     <!-- Right Pane: Selected Emulator Details -->
     <sys:String x:Key="HeaderEmulatorDetail">⚙️ 선택한 에뮬레이터 정보 및 제어</sys:String>

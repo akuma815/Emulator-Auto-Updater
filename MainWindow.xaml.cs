@@ -118,16 +118,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        var visibleColumns = EmulatorDataGrid.Columns
-            .Where(column => column.Visibility == Visibility.Visible)
+        var resizableColumns = EmulatorDataGrid.Columns
+            .Where(column => column.Visibility == Visibility.Visible && column.CanUserResize)
             .ToList();
-        var count = Math.Min(savedWidths.Count, visibleColumns.Count);
+        var count = Math.Min(savedWidths.Count, resizableColumns.Count);
         var totalSaved = savedWidths.Take(count).Sum();
 
         for (var index = 0; index < count; index++)
         {
             var weight = totalSaved > 0 ? (savedWidths[index] / totalSaved) : 1.0;
-            visibleColumns[index].Width = new DataGridLength(weight, DataGridLengthUnitType.Star);
+            resizableColumns[index].Width = new DataGridLength(weight, DataGridLengthUnitType.Star);
         }
     }
 
@@ -140,7 +140,7 @@ public partial class MainWindow : Window
 
         _viewModel.UpdateEmulatorGridColumnWidths(
             EmulatorDataGrid.Columns
-                .Where(column => column.Visibility == Visibility.Visible)
+                .Where(column => column.Visibility == Visibility.Visible && column.CanUserResize)
                 .Select(column => column.ActualWidth));
     }
 

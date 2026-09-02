@@ -80,4 +80,41 @@ public class UpdateCheckLogicTests
         var normalized = LocalizationService.NormalizeLanguageCode(input);
         Assert.Equal(expected, normalized);
     }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_PpssppDevbuilds_ReturnsValidReleaseWithAssets()
+    {
+        var service = new GitHubReleaseService();
+        var release = await service.GetLatestReleaseAsync("https://www.ppsspp.org/devbuilds/", System.Threading.CancellationToken.None);
+
+        Assert.NotNull(release);
+        Assert.False(string.IsNullOrWhiteSpace(release.TagName));
+        Assert.NotEmpty(release.Assets);
+        Assert.Contains(release.Assets, a => a.Name.Contains("ppsspp_win", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BrowseFolderForEmulator_SetsSelectedFolder()
+    {
+        var selectedFolder = @"C:\Emulators\TestEmu";
+        var vm = new ViewModels.MainWindowViewModel(() => selectedFolder);
+        var emu = new EmulatorConfig { Id = "1", Name = "TestEmu", Folder = @"C:\OldPath" };
+        vm.Emulators.Add(emu);
+        vm.SelectedEmulator = emu;
+
+        vm.BrowseFolderForEmulator(emu);
+        Assert.Equal(selectedFolder, emu.Folder);
+    }
+
+    [Fact]
+    public void OpenEmulatorFolder_WithEmptyFolder_SetsWarningStatus()
+    {
+        var vm = new ViewModels.MainWindowViewModel(() => null);
+        var emu = new EmulatorConfig { Id = "1", Name = "TestEmu", Folder = "" };
+        vm.Emulators.Add(emu);
+        vm.SelectedEmulator = emu;
+
+        vm.OpenEmulatorFolder(emu);
+        Assert.False(string.IsNullOrWhiteSpace(vm.StatusMessage));
+    }
 }
