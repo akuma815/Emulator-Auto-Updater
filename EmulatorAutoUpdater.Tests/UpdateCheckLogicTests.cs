@@ -117,4 +117,17 @@ public class UpdateCheckLogicTests
         vm.OpenEmulatorFolder(emu);
         Assert.False(string.IsNullOrWhiteSpace(vm.StatusMessage));
     }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_EdenCiGitea_ReturnsValidReleaseWithWindowsAssets()
+    {
+        var service = new GitHubReleaseService();
+        var assetPattern = @"(?i)(win|windows).*(x64|amd64).*\.(zip|7z)$";
+        var release = await service.GetLatestReleaseAsync("https://git.eden-emu.dev/api/v1/repos/eden-ci/nightly/releases/latest", assetPattern, System.Threading.CancellationToken.None);
+
+        Assert.NotNull(release);
+        Assert.False(string.IsNullOrWhiteSpace(release.TagName));
+        Assert.NotEmpty(release.Assets);
+        Assert.Contains(release.Assets, a => a.Name.Contains("windows", StringComparison.OrdinalIgnoreCase) && a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+    }
 }

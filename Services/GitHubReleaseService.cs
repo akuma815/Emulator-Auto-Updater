@@ -70,7 +70,7 @@ public sealed class GitHubReleaseService
         return info.Provider switch
         {
             RepositoryProvider.GitHub => await GetLatestGitHubReleaseAsync(info, assetPattern, cancellationToken),
-            RepositoryProvider.Gitea => await GetLatestGiteaReleaseAsync(info, cancellationToken),
+            RepositoryProvider.Gitea => await GetLatestGiteaReleaseAsync(info, assetPattern, cancellationToken),
             _ => null
         };
     }
@@ -1830,21 +1830,120 @@ public sealed class GitHubReleaseService
         return assets;
     }
 
-    private async Task<GitHubRelease?> GetLatestGiteaReleaseAsync(RepositoryInfo info, CancellationToken cancellationToken)
+    private async Task<GitHubRelease?> GetLatestGiteaReleaseAsync(RepositoryInfo info, string? assetPattern, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest");
-        request.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        Regex? patternRegex = null;
+        if (!string.IsNullOrWhiteSpace(assetPattern))
+        {
+            try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
+        }
 
-        using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        var candidateReleases = new List<GitHubRelease>();
 
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-        var root = document.RootElement;
+        // 1. Try fetching releases list (up to 20 recent releases)
+        try
+        {
+            using var listRequest = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases?limit=20");
+            listRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            listRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        var tagName = root.GetProperty("tag_name").GetString() ?? root.GetProperty("name").GetString() ?? string.Empty;
-        var name = root.GetProperty("name").GetString() ?? tagName;
+            using var listResponse = await HttpClient.SendAsync(listRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (listResponse.IsSuccessStatusCode)
+            {
+                await using var stream = await listResponse.Content.ReadAsStreamAsync(cancellationToken);
+                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                if (document.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var elem in document.RootElement.EnumerateArray())
+                    {
+                        var release = ParseGiteaReleaseElement(elem);
+                        if (release != null)
+                        {
+                            candidateReleases.Add(release);
+                        }
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            // Fallback to /releases/latest
+        }
+
+        // 2. Fallback: Try GET /releases/latest directly
+        if (candidateReleases.Count == 0)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest");
+                request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                    var release = ParseGiteaReleaseElement(document.RootElement);
+                    if (release != null)
+                    {
+                        candidateReleases.Add(release);
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+            }
+        }
+
+        if (candidateReleases.Count == 0)
+        {
+            return null;
+        }
+
+        // 3. Filter candidate releases by assetPattern if provided
+        if (patternRegex != null)
+        {
+            var matchingRelease = candidateReleases.FirstOrDefault(r => r.Assets.Any(a => patternRegex.IsMatch(a.Name)));
+            if (matchingRelease != null)
+            {
+                return matchingRelease;
+            }
+        }
+
+        // 4. Fallback to the latest release with downloadable assets
+        var releaseWithAssets = candidateReleases.FirstOrDefault(r => r.Assets.Count > 0);
+        if (releaseWithAssets != null)
+        {
+            return releaseWithAssets;
+        }
+
+        // 5. Ultimate fallback to the very first release in list
+        return candidateReleases[0];
+    }
+
+    private static GitHubRelease? ParseGiteaReleaseElement(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var tagName = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? string.Empty : string.Empty;
+        if (string.IsNullOrWhiteSpace(tagName))
+        {
+            tagName = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty;
+        }
+
+        var name = root.TryGetProperty("name", out var nProp) ? nProp.GetString() ?? tagName : tagName;
         var body = root.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() ?? string.Empty :
                    root.TryGetProperty("description", out var descProp) ? descProp.GetString() ?? string.Empty : string.Empty;
         var publishedAt = root.TryGetProperty("published_at", out var publishedAtProp) && publishedAtProp.ValueKind == JsonValueKind.String
@@ -1858,7 +1957,7 @@ public sealed class GitHubReleaseService
         {
             foreach (var assetElement in assetsElement.EnumerateArray())
             {
-                var assetName = assetElement.GetProperty("name").GetString() ?? string.Empty;
+                var assetName = assetElement.TryGetProperty("name", out var aNameProp) ? aNameProp.GetString() ?? string.Empty : string.Empty;
                 var browserUrl = assetElement.TryGetProperty("browser_download_url", out var browserProp) ? browserProp.GetString() : null;
                 var downloadUrl = assetElement.TryGetProperty("download_url", out var downloadProp) ? downloadProp.GetString() : null;
                 var assetUrl = browserUrl ?? downloadUrl;
