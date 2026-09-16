@@ -1495,6 +1495,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         using var handler = new SocketsHttpHandler
         {
+            CookieContainer = GitHubReleaseService.SharedCookieContainer,
+            UseCookies = true,
             AllowAutoRedirect = true,
             AutomaticDecompression = System.Net.DecompressionMethods.All,
             EnableMultipleHttp2Connections = true
@@ -1504,15 +1506,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             DefaultRequestVersion = new Version(2, 0)
         };
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
 
-        using var initialResponse = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var initialResponse = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         initialResponse.EnsureSuccessStatusCode();
 
         var contentType = initialResponse.Content.Headers.ContentType?.MediaType ?? string.Empty;
         if (contentType.Contains("text/html", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("다운로드 실패: 서버에서 바이너리 파일 대신 HTML 웹 페이지를 반환했습니다.");
+            var html = await initialResponse.Content.ReadAsStringAsync(cancellationToken);
+            initialResponse.Dispose();
+
+            if (GitHubReleaseService.IsAnubisChallenge(html))
+            {
+                await GitHubReleaseService.SolveAnubisChallengeAndGetContentAsync(html, downloadUrl, cancellationToken);
+
+                initialResponse = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                initialResponse.EnsureSuccessStatusCode();
+                contentType = initialResponse.Content.Headers.ContentType?.MediaType ?? string.Empty;
+            }
+
+            if (contentType.Contains("text/html", StringComparison.OrdinalIgnoreCase))
+            {
+                initialResponse.Dispose();
+                throw new InvalidOperationException("다운로드 실패: 서버에서 바이너리 파일 대신 HTML 웹 페이지를 반환했습니다.");
+            }
         }
 
         var finalUrl = initialResponse.RequestMessage?.RequestUri?.ToString() ?? downloadUrl;
@@ -1543,7 +1561,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     chunkTasks[chunkIndex] = Task.Run(async () =>
                     {
                         using var chunkReq = new HttpRequestMessage(HttpMethod.Get, finalUrl);
-                        chunkReq.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+                        chunkReq.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
                         chunkReq.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(start, end);
 
                         using var chunkRes = await httpClient.SendAsync(chunkReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -1881,16 +1899,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         Directory.CreateDirectory(Path.GetDirectoryName(destinationFile)!);
 
-        using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+        using var handler = new SocketsHttpHandler
+        {
+            CookieContainer = GitHubReleaseService.SharedCookieContainer,
+            UseCookies = true,
+            AllowAutoRedirect = true,
+            AutomaticDecompression = System.Net.DecompressionMethods.All
+        };
 
-        using var response = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        using var httpClient = new HttpClient(handler);
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+
+        var response = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
 
         var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
         if (contentType.Contains("text/html", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("다운로드 실패: 서버에서 바이너리 파일 대신 HTML 웹 페이지를 반환했습니다.");
+            var html = await response.Content.ReadAsStringAsync();
+            response.Dispose();
+
+            if (GitHubReleaseService.IsAnubisChallenge(html))
+            {
+                await GitHubReleaseService.SolveAnubisChallengeAndGetContentAsync(html, downloadUrl, CancellationToken.None);
+
+                response = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+                contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+            }
+
+            if (contentType.Contains("text/html", StringComparison.OrdinalIgnoreCase))
+            {
+                response.Dispose();
+                throw new InvalidOperationException("다운로드 실패: 서버에서 바이너리 파일 대신 HTML 웹 페이지를 반환했습니다.");
+            }
         }
 
         var totalBytes = response.Content.Headers.ContentLength ?? -1L;

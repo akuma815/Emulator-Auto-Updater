@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 using System.Xml.Linq;
 using EmulatorAutoUpdater.Models;
 
@@ -16,7 +17,18 @@ namespace EmulatorAutoUpdater.Services;
 
 public sealed class GitHubReleaseService
 {
-    private static readonly HttpClient HttpClient = new()
+    public static readonly CookieContainer SharedCookieContainer = new();
+
+    private static readonly SocketsHttpHandler SharedHandler = new()
+    {
+        CookieContainer = SharedCookieContainer,
+        UseCookies = true,
+        AllowAutoRedirect = true,
+        AutomaticDecompression = DecompressionMethods.All,
+        EnableMultipleHttp2Connections = true
+    };
+
+    private static readonly HttpClient HttpClient = new(SharedHandler)
     {
         DefaultRequestVersion = new Version(2, 0)
     };
@@ -767,23 +779,35 @@ public sealed class GitHubReleaseService
             return null;
         }
 
-        var downloadUrl = response.RequestMessage?.RequestUri?.ToString() ?? repositoryUrl;
-        var assetName = GetAssetNameFromResponse(response) ?? Path.GetFileName(new Uri(downloadUrl).LocalPath);
+        var isNightlyLink = repositoryUrl.StartsWith("https://nightly.link", StringComparison.OrdinalIgnoreCase);
+        // For nightly.link, Azure Blob SAS redirect expires after ~15 minutes.
+        // Always retain the original nightly.link URL as BrowserDownloadUrl so every download gets a fresh redirect.
+        var downloadUrl = isNightlyLink
+            ? repositoryUrl
+            : (response.RequestMessage?.RequestUri?.ToString() ?? repositoryUrl);
+
+        var assetName = GetAssetNameFromResponse(response) ?? Path.GetFileName(new Uri(repositoryUrl).LocalPath);
         if (string.IsNullOrWhiteSpace(assetName))
         {
             assetName = "download.zip";
         }
 
         var publishedAt = response.Content.Headers.LastModified ??
+                          response.Headers.Date ??
                           DateTimeOffset.MinValue;
 
-        if (repositoryUrl.StartsWith("https://nightly.link", StringComparison.OrdinalIgnoreCase))
+        if (isNightlyLink)
         {
             var commitDate = await FetchNightlyLinkCommitDateAsync(repositoryUrl, cancellationToken);
             if (commitDate.HasValue)
             {
                 publishedAt = commitDate.Value;
             }
+        }
+
+        if (publishedAt == DateTimeOffset.MinValue)
+        {
+            publishedAt = DateTimeOffset.Now;
         }
 
         var asset = new GitHubAsset
@@ -804,50 +828,70 @@ public sealed class GitHubReleaseService
 
     private async Task<HttpResponseMessage?> GetDirectDownloadResponseAsync(string repositoryUrl, CancellationToken cancellationToken)
     {
-        HttpResponseMessage? response = null;
-        try
-        {
-            var headRequest = new HttpRequestMessage(HttpMethod.Head, repositoryUrl);
-            headRequest.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
-            headRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+        var isNightlyLink = repositoryUrl.StartsWith("https://nightly.link", StringComparison.OrdinalIgnoreCase);
 
-            response = await HttpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (response.IsSuccessStatusCode)
+        // 1. If not nightly.link, try HEAD request first (nightly.link returns 404 on HEAD)
+        if (!isNightlyLink)
+        {
+            try
             {
-                return response;
-            }
+                var headRequest = new HttpRequestMessage(HttpMethod.Head, repositoryUrl);
+                headRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                headRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 
-            if (response.StatusCode != System.Net.HttpStatusCode.MethodNotAllowed &&
-                response.StatusCode != System.Net.HttpStatusCode.NotImplemented &&
-                response.StatusCode != System.Net.HttpStatusCode.NotFound &&
-                response.StatusCode != System.Net.HttpStatusCode.Forbidden)
+                var headResponse = await HttpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (headResponse.IsSuccessStatusCode)
+                {
+                    return headResponse;
+                }
+
+                headResponse.Dispose();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                response.Dispose();
-                return null;
+                throw;
             }
-
-            response.Dispose();
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            response?.Dispose();
-            throw;
-        }
-        catch
-        {
-            response?.Dispose();
+            catch
+            {
+                // Fallback to GET on any failure of HEAD
+            }
         }
 
+        // 2. GET request (HeadersRead)
         try
         {
             var getRequest = new HttpRequestMessage(HttpMethod.Get, repositoryUrl);
-            getRequest.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+            getRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
             getRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 
             var getResponse = await HttpClient.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (!getResponse.IsSuccessStatusCode)
             {
                 getResponse.Dispose();
+                return null;
+            }
+
+            // Check if response is an Anubis challenge
+            if (getResponse.Content.Headers.ContentType?.MediaType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var html = await getResponse.Content.ReadAsStringAsync(cancellationToken);
+                getResponse.Dispose();
+
+                if (IsAnubisChallenge(html))
+                {
+                    await SolveAnubisChallengeAndGetContentAsync(html, repositoryUrl, cancellationToken);
+
+                    // Retry GET with acquired cookies
+                    var retryRequest = new HttpRequestMessage(HttpMethod.Get, repositoryUrl);
+                    retryRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                    retryRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+                    var retryResponse = await HttpClient.SendAsync(retryRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                    if (retryResponse.IsSuccessStatusCode)
+                    {
+                        return retryResponse;
+                    }
+                    retryResponse.Dispose();
+                }
                 return null;
             }
 
@@ -1283,7 +1327,7 @@ public sealed class GitHubReleaseService
 
             var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/commits/{branch}";
             using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            request.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -1830,6 +1874,154 @@ public sealed class GitHubReleaseService
         return assets;
     }
 
+    public static bool IsAnubisChallenge(string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return false;
+        }
+
+        return content.Contains("anubis_challenge", StringComparison.OrdinalIgnoreCase) ||
+               (content.Contains("anubis", StringComparison.OrdinalIgnoreCase) && content.Contains("pass-challenge", StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static async Task<string?> SolveAnubisChallengeAndGetContentAsync(
+        string challengeHtml,
+        string targetUrl,
+        CancellationToken cancellationToken)
+    {
+        var match = Regex.Match(
+            challengeHtml,
+            @"<script\s+id=[""']anubis_challenge[""'][^>]*>\s*(?<json>\{.*?\})\s*</script>",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        using var doc = JsonDocument.Parse(match.Groups["json"].Value);
+        var root = doc.RootElement;
+
+        int difficulty = 2;
+        if (root.TryGetProperty("rules", out var rules) && rules.TryGetProperty("difficulty", out var diffProp))
+        {
+            difficulty = diffProp.GetInt32();
+        }
+        else if (root.TryGetProperty("challenge", out var chObj) && chObj.TryGetProperty("difficulty", out var chDiff))
+        {
+            difficulty = chDiff.GetInt32();
+        }
+
+        if (!root.TryGetProperty("challenge", out var challenge))
+        {
+            return null;
+        }
+
+        var randomData = challenge.TryGetProperty("randomData", out var rdProp) ? rdProp.GetString() : null;
+        var challengeId = challenge.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(randomData) || string.IsNullOrWhiteSpace(challengeId))
+        {
+            return null;
+        }
+
+        int p = difficulty / 2;
+        bool u = (difficulty % 2) != 0;
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        long nonce = 0;
+        string foundHash = string.Empty;
+        long foundNonce = 0;
+
+        byte[] randomDataBytes = Encoding.UTF8.GetBytes(randomData);
+
+        while (true)
+        {
+            if ((nonce & 0x3FF) == 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            var nonceBytes = Encoding.UTF8.GetBytes(nonce.ToString(CultureInfo.InvariantCulture));
+            var payload = new byte[randomDataBytes.Length + nonceBytes.Length];
+            Buffer.BlockCopy(randomDataBytes, 0, payload, 0, randomDataBytes.Length);
+            Buffer.BlockCopy(nonceBytes, 0, payload, randomDataBytes.Length, nonceBytes.Length);
+
+            byte[] hash = SHA256.HashData(payload);
+
+            bool valid = true;
+            for (int i = 0; i < p; i++)
+            {
+                if (hash[i] != 0)
+                {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid && u && ((hash[p] >> 4) != 0))
+            {
+                valid = false;
+            }
+
+            if (valid)
+            {
+                foundHash = Convert.ToHexString(hash).ToLowerInvariant();
+                foundNonce = nonce;
+                break;
+            }
+
+            nonce++;
+        }
+
+        stopwatch.Stop();
+        var elapsed = Math.Max(0, (int)stopwatch.ElapsedMilliseconds);
+
+        var uri = new Uri(targetUrl);
+        var passUrl = $"{uri.Scheme}://{uri.Authority}/.within.website/x/cmd/anubis/api/pass-challenge?" +
+                      $"id={Uri.EscapeDataString(challengeId)}" +
+                      $"&response={Uri.EscapeDataString(foundHash)}" +
+                      $"&nonce={foundNonce}" +
+                      $"&redir={Uri.EscapeDataString(targetUrl)}" +
+                      $"&elapsedTime={elapsed}";
+
+        using var passRequest = new HttpRequestMessage(HttpMethod.Get, passUrl);
+        passRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+        passRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        passRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+
+        using var passResponse = await HttpClient.SendAsync(passRequest, HttpCompletionOption.ResponseContentRead, cancellationToken);
+        if (!passResponse.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await passResponse.Content.ReadAsStringAsync(cancellationToken);
+    }
+
+    public static async Task<bool> SolveAnubisIfPresentAsync(string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var testReq = new HttpRequestMessage(HttpMethod.Get, url);
+            testReq.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            using var testRes = await HttpClient.SendAsync(testReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (testRes.Content.Headers.ContentType?.MediaType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var html = await testRes.Content.ReadAsStringAsync(cancellationToken);
+                if (IsAnubisChallenge(html))
+                {
+                    var res = await SolveAnubisChallengeAndGetContentAsync(html, url, cancellationToken);
+                    return res != null;
+                }
+            }
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task<GitHubRelease?> GetLatestGiteaReleaseAsync(RepositoryInfo info, string? assetPattern, CancellationToken cancellationToken)
     {
         Regex? patternRegex = null;
@@ -1843,23 +2035,32 @@ public sealed class GitHubReleaseService
         // 1. Try fetching releases list (up to 20 recent releases)
         try
         {
-            using var listRequest = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases?limit=20");
+            var listUrl = $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases?limit=20";
+            using var listRequest = new HttpRequestMessage(HttpMethod.Get, listUrl);
             listRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
             listRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             using var listResponse = await HttpClient.SendAsync(listRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (listResponse.IsSuccessStatusCode)
             {
-                await using var stream = await listResponse.Content.ReadAsStreamAsync(cancellationToken);
-                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-                if (document.RootElement.ValueKind == JsonValueKind.Array)
+                var content = await listResponse.Content.ReadAsStringAsync(cancellationToken);
+                if (IsAnubisChallenge(content))
                 {
-                    foreach (var elem in document.RootElement.EnumerateArray())
+                    content = await SolveAnubisChallengeAndGetContentAsync(content, listUrl, cancellationToken);
+                }
+
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    using var document = JsonDocument.Parse(content);
+                    if (document.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        var release = ParseGiteaReleaseElement(elem);
-                        if (release != null)
+                        foreach (var elem in document.RootElement.EnumerateArray())
                         {
-                            candidateReleases.Add(release);
+                            var release = ParseGiteaReleaseElement(elem);
+                            if (release != null)
+                            {
+                                candidateReleases.Add(release);
+                            }
                         }
                     }
                 }
@@ -1879,19 +2080,28 @@ public sealed class GitHubReleaseService
         {
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest");
+                var latestUrl = $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/latest";
+                using var request = new HttpRequestMessage(HttpMethod.Get, latestUrl);
                 request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-                    var release = ParseGiteaReleaseElement(document.RootElement);
-                    if (release != null)
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    if (IsAnubisChallenge(content))
                     {
-                        candidateReleases.Add(release);
+                        content = await SolveAnubisChallengeAndGetContentAsync(content, latestUrl, cancellationToken);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        using var document = JsonDocument.Parse(content);
+                        var release = ParseGiteaReleaseElement(document.RootElement);
+                        if (release != null)
+                        {
+                            candidateReleases.Add(release);
+                        }
                     }
                 }
             }

@@ -130,4 +130,40 @@ public class UpdateCheckLogicTests
         Assert.NotEmpty(release.Assets);
         Assert.Contains(release.Assets, a => a.Name.Contains("windows", StringComparison.OrdinalIgnoreCase) && a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_DeSmuMENightlyLink_ReturnsValidReleaseWithAssets()
+    {
+        var service = new GitHubReleaseService();
+        var url = "https://nightly.link/TASEmulators/desmume/workflows/build_win/master/desmume-win-x64.zip";
+
+        var release = await service.GetLatestReleaseAsync(url, System.Threading.CancellationToken.None);
+        Assert.NotNull(release);
+        Assert.NotEmpty(release.Assets);
+        Assert.Equal("desmume-win-x64.zip", release.Assets[0].Name);
+        Assert.True(release.PublishedAt > DateTimeOffset.MinValue);
+
+        var foundAssets = service.FindAssets(release, "");
+        Assert.NotEmpty(foundAssets);
+        Assert.False(string.IsNullOrWhiteSpace(foundAssets[0].Version));
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_RyujinxCanary_ReturnsValidReleaseWithAssets()
+    {
+        var service = new GitHubReleaseService();
+        var url = "https://git.ryujinx.app/api/v1/repos/ryubing/canary/releases/latest";
+        var assetPattern = @"(?i)ryujinx.*canary.*win_x64.*\.zip$";
+
+        var release = await service.GetLatestReleaseAsync(url, assetPattern, System.Threading.CancellationToken.None);
+        Assert.NotNull(release);
+        Assert.False(string.IsNullOrWhiteSpace(release.TagName));
+        Assert.NotEmpty(release.Assets);
+        Assert.Contains(release.Assets, a => a.Name.Contains("win_x64", StringComparison.OrdinalIgnoreCase) && a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+
+        var foundAssets = service.FindAssets(release, assetPattern);
+        Assert.NotEmpty(foundAssets);
+        Assert.False(string.IsNullOrWhiteSpace(foundAssets[0].Version));
+        Assert.Contains("1.3.", foundAssets[0].Version);
+    }
 }
