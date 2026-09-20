@@ -107,6 +107,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand ClearLogCommand { get; }
 
     public string WindowTitle => $"Emulator Auto Updater v{AppSettings.CurrentAppVersion}";
+    public string CurrentAppVersionBadge => $"v{AppSettings.CurrentAppVersion}";
 
     public bool IsAppUpdateAvailable
     {

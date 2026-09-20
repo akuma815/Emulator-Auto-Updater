@@ -29,7 +29,7 @@ public sealed class AppUpdateService
     {
         var release = await _releaseService.GetLatestReleaseAsync(
             AppSettings.AppUpdateRepository,
-            @"(?i)EmulatorAutoUpdater-.*\.zip$",
+            @"(?i)EmulatorAutoUpdater[_\-].*\.zip$",
             cancellationToken);
 
         if (release == null || release.Assets.Count == 0)
