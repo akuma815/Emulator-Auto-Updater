@@ -2119,10 +2119,12 @@ public sealed class GitHubReleaseService
             return null;
         }
 
+        var orderedCandidates = candidateReleases.OrderByDescending(r => r.PublishedAt).ToList();
+
         // 3. Filter candidate releases by assetPattern if provided
         if (patternRegex != null)
         {
-            var matchingRelease = candidateReleases.FirstOrDefault(r => r.Assets.Any(a => patternRegex.IsMatch(a.Name)));
+            var matchingRelease = orderedCandidates.FirstOrDefault(r => r.Assets.Any(a => patternRegex.IsMatch(a.Name)));
             if (matchingRelease != null)
             {
                 return matchingRelease;
@@ -2130,14 +2132,14 @@ public sealed class GitHubReleaseService
         }
 
         // 4. Fallback to the latest release with downloadable assets
-        var releaseWithAssets = candidateReleases.FirstOrDefault(r => r.Assets.Count > 0);
+        var releaseWithAssets = orderedCandidates.FirstOrDefault(r => r.Assets.Count > 0);
         if (releaseWithAssets != null)
         {
             return releaseWithAssets;
         }
 
         // 5. Ultimate fallback to the very first release in list
-        return candidateReleases[0];
+        return orderedCandidates[0];
     }
 
     private static GitHubRelease? ParseGiteaReleaseElement(JsonElement root)
@@ -2184,6 +2186,19 @@ public sealed class GitHubReleaseService
             }
         }
 
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            var bodyAssets = ExtractAssetsFromBody(body);
+            foreach (var bAsset in bodyAssets)
+            {
+                if (!assets.Any(a => string.Equals(a.Name, bAsset.Name, StringComparison.OrdinalIgnoreCase) ||
+                                     string.Equals(a.BrowserDownloadUrl, bAsset.BrowserDownloadUrl, StringComparison.OrdinalIgnoreCase)))
+                {
+                    assets.Add(bAsset);
+                }
+            }
+        }
+
         return new GitHubRelease
         {
             TagName = tagName,
@@ -2193,6 +2208,73 @@ public sealed class GitHubReleaseService
             FetchSource = "Gitea API",
             Assets = assets
         };
+    }
+
+    public static IReadOnlyList<GitHubAsset> ExtractAssetsFromBody(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return Array.Empty<GitHubAsset>();
+        }
+
+        var assets = new List<GitHubAsset>();
+        var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // 1. Match Markdown links: [text](url)
+        var mdMatches = Regex.Matches(body, @"\[(?<text>[^\]]*)\]\((?<url>https?://[^\)\s]+)\)", RegexOptions.IgnoreCase);
+        foreach (Match m in mdMatches)
+        {
+            var url = m.Groups["url"].Value.Trim();
+            AddAssetIfValid(url, assets, seenUrls);
+        }
+
+        // 2. Match HTML href links: href="url"
+        var hrefMatches = Regex.Matches(body, @"href=[""'](?<url>https?://[^""'\s]+)[""']", RegexOptions.IgnoreCase);
+        foreach (Match m in hrefMatches)
+        {
+            var url = m.Groups["url"].Value.Trim();
+            AddAssetIfValid(url, assets, seenUrls);
+        }
+
+        // 3. Match raw URLs: https://...
+        var rawUrlMatches = Regex.Matches(body, @"(?<url>https?://[^\s<>\(\)""']+\.(zip|7z|tar\.gz|tgz|xz|exe|msi|apk|dmg|AppImage|zsync|torrent))", RegexOptions.IgnoreCase);
+        foreach (Match m in rawUrlMatches)
+        {
+            var url = m.Groups["url"].Value.Trim();
+            AddAssetIfValid(url, assets, seenUrls);
+        }
+
+        return assets;
+    }
+
+    private static void AddAssetIfValid(string url, List<GitHubAsset> assets, HashSet<string> seenUrls)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !seenUrls.Add(url))
+        {
+            return;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return;
+        }
+
+        var fileName = Path.GetFileName(uri.LocalPath);
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return;
+        }
+
+        if (!Regex.IsMatch(fileName, @"\.(zip|7z|tar\.gz|tgz|xz|exe|msi|apk|dmg|AppImage|zsync|torrent)$", RegexOptions.IgnoreCase))
+        {
+            return;
+        }
+
+        assets.Add(new GitHubAsset
+        {
+            Name = fileName,
+            BrowserDownloadUrl = url
+        });
     }
 
     private static string CleanReleaseVersion(string releaseTag)

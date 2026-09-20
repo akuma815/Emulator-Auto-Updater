@@ -129,6 +129,14 @@ public class UpdateCheckLogicTests
         Assert.False(string.IsNullOrWhiteSpace(release.TagName));
         Assert.NotEmpty(release.Assets);
         Assert.Contains(release.Assets, a => a.Name.Contains("windows", StringComparison.OrdinalIgnoreCase) && a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+
+        // Must be the true latest release on or after Sep 19, 2026, not the old Sep 12/13 build!
+        Assert.True(release.PublishedAt >= new DateTimeOffset(2026, 9, 19, 0, 0, 0, TimeSpan.Zero),
+            $"Expected published date on or after Sep 19, 2026, but got {release.PublishedAt}");
+
+        var foundAssets = service.FindAssets(release, assetPattern);
+        Assert.NotEmpty(foundAssets);
+        Assert.Contains("nightly.eden-emu.dev", foundAssets[0].DownloadUrl);
     }
 
     [Fact]
