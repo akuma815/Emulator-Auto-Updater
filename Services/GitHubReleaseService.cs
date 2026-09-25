@@ -25,12 +25,14 @@ public sealed class GitHubReleaseService
         UseCookies = true,
         AllowAutoRedirect = true,
         AutomaticDecompression = DecompressionMethods.All,
-        EnableMultipleHttp2Connections = true
+        EnableMultipleHttp2Connections = true,
+        ConnectTimeout = TimeSpan.FromSeconds(10)
     };
 
     private static readonly HttpClient HttpClient = new(SharedHandler)
     {
-        DefaultRequestVersion = new Version(2, 0)
+        DefaultRequestVersion = new Version(2, 0),
+        Timeout = TimeSpan.FromSeconds(15)
     };
 
     public Task<GitHubRelease?> GetLatestReleaseAsync(string repository, CancellationToken cancellationToken)
@@ -51,6 +53,11 @@ public sealed class GitHubReleaseService
         if (IsDolphinDownloadPageUrl(repository))
         {
             return await GetLatestDolphinDevelopmentReleaseAsync(repository, cancellationToken);
+        }
+
+        if (IsNightlyLinkUrl(repository))
+        {
+            return await GetLatestNightlyLinkReleaseAsync(repository, cancellationToken);
         }
 
         if (IsDirectDownloadUrl(repository))
@@ -749,6 +756,433 @@ public sealed class GitHubReleaseService
         [property: JsonPropertyName("date")] string? Date,
         [property: JsonPropertyName("builds")] Dictionary<string, string[]?>? Builds
     );
+
+    public static bool IsNightlyLinkUrl(string repository)
+    {
+        if (string.IsNullOrWhiteSpace(repository))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(repository.Trim(), UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return string.Equals(uri.Host, "nightly.link", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith(".nightly.link", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<GitHubRelease?> GetLatestNightlyLinkReleaseAsync(string repositoryUrl, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(repositoryUrl) || !Uri.TryCreate(repositoryUrl.Trim(), UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        // Try direct response first (if nightly.link is healthy and artifact is not expired)
+        try
+        {
+            using var directResponse = await GetDirectDownloadResponseAsync(repositoryUrl, cancellationToken);
+            if (directResponse != null && directResponse.IsSuccessStatusCode)
+            {
+                var ct = directResponse.Content.Headers.ContentType?.MediaType ?? string.Empty;
+                if (!ct.Contains("text/html", StringComparison.OrdinalIgnoreCase) &&
+                    !ct.Contains("text/plain", StringComparison.OrdinalIgnoreCase))
+                {
+                    var assetName = GetAssetNameFromResponse(directResponse) ?? Path.GetFileName(uri.LocalPath);
+                    if (string.IsNullOrWhiteSpace(assetName))
+                    {
+                        assetName = "download.zip";
+                    }
+
+                    var publishedAt = directResponse.Content.Headers.LastModified ??
+                                      directResponse.Headers.Date ??
+                                      DateTimeOffset.MinValue;
+
+                    var commitDate = await FetchNightlyLinkCommitDateAsync(repositoryUrl, cancellationToken);
+                    if (commitDate.HasValue)
+                    {
+                        publishedAt = commitDate.Value;
+                    }
+
+                    if (publishedAt == DateTimeOffset.MinValue)
+                    {
+                        publishedAt = DateTimeOffset.Now;
+                    }
+
+                    var asset = new GitHubAsset
+                    {
+                        Name = assetName,
+                        BrowserDownloadUrl = repositoryUrl
+                    };
+
+                    return new GitHubRelease
+                    {
+                        TagName = asset.Name,
+                        Name = asset.Name,
+                        Body = string.Empty,
+                        PublishedAt = publishedAt,
+                        FetchSource = "nightly.link (Direct)",
+                        Assets = new List<GitHubAsset> { asset }
+                    };
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            // Direct request failed, fallback to smart resolution below
+        }
+
+        // Parse nightly.link URL components:
+        // Pattern 1: https://nightly.link/{owner}/{repo}/workflows/{workflow}/{branch}/{artifact}.zip
+        // Pattern 2: https://nightly.link/{owner}/{repo}/actions/runs/{runId}/{artifact}.zip
+        var segments = uri.AbsolutePath.Trim('/').Split('/');
+        string? owner = null;
+        string? repo = null;
+        string? workflow = null;
+        string? branch = null;
+        string? targetArtifact = null;
+
+        if (segments.Length >= 5 && string.Equals(segments[2], "workflows", StringComparison.OrdinalIgnoreCase))
+        {
+            owner = segments[0];
+            repo = segments[1];
+            workflow = segments[3];
+            branch = segments[4];
+            if (segments.Length >= 6)
+            {
+                targetArtifact = Uri.UnescapeDataString(segments[5]);
+            }
+        }
+        else if (segments.Length >= 5 && string.Equals(segments[2], "actions", StringComparison.OrdinalIgnoreCase) &&
+                 string.Equals(segments[3], "runs", StringComparison.OrdinalIgnoreCase))
+        {
+            owner = segments[0];
+            repo = segments[1];
+            targetArtifact = Uri.UnescapeDataString(segments[4]);
+        }
+
+        if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repo))
+        {
+            return null;
+        }
+
+        branch = string.IsNullOrWhiteSpace(branch) ? "master" : branch;
+        if (!string.IsNullOrWhiteSpace(targetArtifact))
+        {
+            if (!targetArtifact.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                !targetArtifact.EndsWith(".7z", StringComparison.OrdinalIgnoreCase))
+            {
+                targetArtifact += ".zip";
+            }
+        }
+        else
+        {
+            targetArtifact = $"{repo}-windows.zip";
+        }
+
+        // Fallback Step 1: Scrape GitHub Actions runs from web (0 rate limits!)
+        var candidateRuns = await ScrapeGitHubActionsRunsAsync(owner, repo, branch, cancellationToken);
+        foreach (var (runId, runDate) in candidateRuns)
+        {
+            var candidateUrl = $"https://nightly.link/{owner}/{repo}/actions/runs/{runId}/{Uri.EscapeDataString(targetArtifact)}";
+            try
+            {
+                using var testResponse = await GetDirectDownloadResponseAsync(candidateUrl, cancellationToken);
+                if (testResponse != null && testResponse.IsSuccessStatusCode)
+                {
+                    var ct = testResponse.Content.Headers.ContentType?.MediaType ?? string.Empty;
+                    if (!ct.Contains("text/html", StringComparison.OrdinalIgnoreCase) &&
+                        !ct.Contains("text/plain", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var publishedAt = runDate ??
+                                          testResponse.Content.Headers.LastModified ??
+                                          testResponse.Headers.Date ??
+                                          DateTimeOffset.Now;
+
+                        var asset = new GitHubAsset
+                        {
+                            Name = targetArtifact,
+                            BrowserDownloadUrl = candidateUrl
+                        };
+
+                        return new GitHubRelease
+                        {
+                            TagName = targetArtifact,
+                            Name = targetArtifact,
+                            Body = string.Empty,
+                            PublishedAt = publishedAt,
+                            FetchSource = $"nightly.link (Run #{runId})",
+                            Assets = new List<GitHubAsset> { asset }
+                        };
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Continue to next candidate
+            }
+        }
+
+        // Fallback Step 2: Query GitHub Actions REST API
+        var apiRuns = await FetchGitHubActionsApiRunsAsync(owner, repo, branch, targetArtifact, cancellationToken);
+        foreach (var (runId, runDate, exactArtifactName) in apiRuns)
+        {
+            var candidateUrl = $"https://nightly.link/{owner}/{repo}/actions/runs/{runId}/{Uri.EscapeDataString(exactArtifactName)}";
+            try
+            {
+                using var testResponse = await GetDirectDownloadResponseAsync(candidateUrl, cancellationToken);
+                if (testResponse != null && testResponse.IsSuccessStatusCode)
+                {
+                    var ct = testResponse.Content.Headers.ContentType?.MediaType ?? string.Empty;
+                    if (!ct.Contains("text/html", StringComparison.OrdinalIgnoreCase) &&
+                        !ct.Contains("text/plain", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var publishedAt = runDate ??
+                                          testResponse.Content.Headers.LastModified ??
+                                          testResponse.Headers.Date ??
+                                          DateTimeOffset.Now;
+
+                        var asset = new GitHubAsset
+                        {
+                            Name = exactArtifactName,
+                            BrowserDownloadUrl = candidateUrl
+                        };
+
+                        return new GitHubRelease
+                        {
+                            TagName = exactArtifactName,
+                            Name = exactArtifactName,
+                            Body = string.Empty,
+                            PublishedAt = publishedAt,
+                            FetchSource = $"nightly.link (Run #{runId})",
+                            Assets = new List<GitHubAsset> { asset }
+                        };
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Continue to next run
+            }
+        }
+
+        // Fallback Step 3: Try scraping nightly.link HTML landing page
+        if (!string.IsNullOrWhiteSpace(workflow))
+        {
+            var landingUrl = $"https://nightly.link/{owner}/{repo}/workflows/{workflow}/{branch}";
+            var landingLink = await ScrapeNightlyLinkLandingPageAsync(landingUrl, targetArtifact, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(landingLink))
+            {
+                try
+                {
+                    using var testResponse = await GetDirectDownloadResponseAsync(landingLink, cancellationToken);
+                    if (testResponse != null && testResponse.IsSuccessStatusCode)
+                    {
+                        var publishedAt = testResponse.Content.Headers.LastModified ??
+                                          testResponse.Headers.Date ??
+                                          DateTimeOffset.Now;
+
+                        var asset = new GitHubAsset
+                        {
+                            Name = targetArtifact,
+                            BrowserDownloadUrl = landingLink
+                        };
+
+                        return new GitHubRelease
+                        {
+                            TagName = targetArtifact,
+                            Name = targetArtifact,
+                            Body = string.Empty,
+                            PublishedAt = publishedAt,
+                            FetchSource = "nightly.link (Workflow)",
+                            Assets = new List<GitHubAsset> { asset }
+                        };
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static async Task<List<(string RunId, DateTimeOffset? Date)>> ScrapeGitHubActionsRunsAsync(
+        string owner, string repo, string branch, CancellationToken cancellationToken)
+    {
+        var results = new List<(string RunId, DateTimeOffset? Date)>();
+        try
+        {
+            var actionsUrl = $"https://github.com/{owner}/{repo}/actions?query=branch%3A{Uri.EscapeDataString(branch)}+is%3Asuccess";
+            using var request = new HttpRequestMessage(HttpMethod.Get, actionsUrl);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return results;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var runRegex = new Regex(
+                $@"/{Regex.Escape(owner)}/{Regex.Escape(repo)}/actions/runs/(\d+)",
+                RegexOptions.IgnoreCase);
+            var dateRegex = new Regex(
+                @"<relative-time[^>]*datetime=[""']([^""']+)[""']",
+                RegexOptions.IgnoreCase);
+
+            var runMatches = runRegex.Matches(html);
+            var dateMatches = dateRegex.Matches(html);
+
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < runMatches.Count && results.Count < 5; i++)
+            {
+                var runId = runMatches[i].Groups[1].Value;
+                if (seen.Add(runId))
+                {
+                    DateTimeOffset? date = null;
+                    if (i < dateMatches.Count && DateTimeOffset.TryParse(dateMatches[i].Groups[1].Value, out var dt))
+                    {
+                        date = dt;
+                    }
+                    results.Add((runId, date));
+                }
+            }
+        }
+        catch
+        {
+        }
+        return results;
+    }
+
+    private static async Task<List<(string RunId, DateTimeOffset? Date, string ArtifactName)>> FetchGitHubActionsApiRunsAsync(
+        string owner, string repo, string branch, string targetArtifact, CancellationToken cancellationToken)
+    {
+        var results = new List<(string RunId, DateTimeOffset? Date, string ArtifactName)>();
+        try
+        {
+            var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/actions/runs?branch={Uri.EscapeDataString(branch)}&status=success&per_page=5";
+            using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return results;
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            if (doc.RootElement.TryGetProperty("workflow_runs", out var runsElem) && runsElem.ValueKind == JsonValueKind.Array)
+            {
+                var artifactStem = Path.GetFileNameWithoutExtension(targetArtifact).ToLowerInvariant();
+                foreach (var run in runsElem.EnumerateArray())
+                {
+                    if (run.TryGetProperty("id", out var idProp))
+                    {
+                        var runId = idProp.ToString();
+                        DateTimeOffset? date = null;
+                        if (run.TryGetProperty("created_at", out var dateProp) &&
+                            DateTimeOffset.TryParse(dateProp.GetString(), out var dt))
+                        {
+                            date = dt;
+                        }
+
+                        if (run.TryGetProperty("artifacts_url", out var artifactsUrlProp))
+                        {
+                            var artUrl = artifactsUrlProp.GetString();
+                            if (!string.IsNullOrWhiteSpace(artUrl))
+                            {
+                                using var artReq = new HttpRequestMessage(HttpMethod.Get, artUrl);
+                                artReq.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                                artReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                                using var artRes = await HttpClient.SendAsync(artReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                                if (artRes.IsSuccessStatusCode)
+                                {
+                                    await using var artStream = await artRes.Content.ReadAsStreamAsync(cancellationToken);
+                                    using var artDoc = await JsonDocument.ParseAsync(artStream, cancellationToken: cancellationToken);
+                                    if (artDoc.RootElement.TryGetProperty("artifacts", out var arts) && arts.ValueKind == JsonValueKind.Array)
+                                    {
+                                        foreach (var a in arts.EnumerateArray())
+                                        {
+                                            var aname = a.GetProperty("name").GetString() ?? "";
+                                            var isExpired = a.TryGetProperty("expired", out var exp) && exp.GetBoolean();
+                                            if (!isExpired && (aname.ToLowerInvariant().Contains(artifactStem) || artifactStem.Contains(aname.ToLowerInvariant())))
+                                            {
+                                                var fullName = aname.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? aname : aname + ".zip";
+                                                results.Add((runId, date, fullName));
+                                                return results;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+        }
+        return results;
+    }
+
+    private static async Task<string?> ScrapeNightlyLinkLandingPageAsync(string landingUrl, string targetArtifact, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, landingUrl);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+            using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var artifactStem = Path.GetFileNameWithoutExtension(targetArtifact);
+
+            var matches = Regex.Matches(html, @"href=[""']([^""']+)[""']", RegexOptions.IgnoreCase);
+            foreach (Match m in matches)
+            {
+                var href = m.Groups[1].Value;
+                if ((href.Contains("/actions/runs/", StringComparison.OrdinalIgnoreCase) ||
+                     href.Contains("blob.core.windows.net", StringComparison.OrdinalIgnoreCase)) &&
+                    (href.Contains(artifactStem, StringComparison.OrdinalIgnoreCase) || href.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return href;
+                }
+            }
+        }
+        catch
+        {
+        }
+        return null;
+    }
 
     public static bool IsDirectDownloadUrl(string repository)
     {

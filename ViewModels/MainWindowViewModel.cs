@@ -804,11 +804,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var release = await _releaseService.GetLatestReleaseAsync(emulator.Repository, emulator.AssetPattern, CancellationToken.None);
             if (release == null)
             {
+                var isRyujinxApp = !string.IsNullOrWhiteSpace(emulator.Repository) && emulator.Repository.Contains("git.ryujinx.app", StringComparison.OrdinalIgnoreCase);
                 emulator.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
                 emulator.StatusType = "CheckFailed";
                 if (ReferenceEquals(SelectedEmulator, emulator))
                 {
-                    StatusMessage = "릴리즈를 가져오지 못했습니다. Repository 또는 URL을 확인하세요.";
+                    StatusMessage = isRyujinxApp
+                        ? "git.ryujinx.app 서버 오프라인 또는 점검 중으로 조회가 실패했습니다."
+                        : "릴리즈를 가져오지 못했습니다. Repository 또는 URL을 확인하세요.";
                 }
                 return;
             }
@@ -934,9 +937,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                     if (release == null)
                     {
+                        var isRyujinxApp = !string.IsNullOrWhiteSpace(emulator.Repository) && emulator.Repository.Contains("git.ryujinx.app", StringComparison.OrdinalIgnoreCase);
                         emulator.StatusText = LocalizationService.GetString("StatusCheckFailed", "조회 실패");
                         emulator.StatusType = "CheckFailed";
-                        results[index] = ($"{emulator.Name}: 릴리즈 조회 실패", null);
+                        var failMsg = isRyujinxApp
+                            ? $"{emulator.Name}: 릴리즈 조회 실패 (git.ryujinx.app 서버 오프라인/점검 중)"
+                            : $"{emulator.Name}: 릴리즈 조회 실패";
+                        results[index] = (failMsg, null);
                     }
                     else
                     {
@@ -1087,7 +1094,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                         if (release == null)
                         {
-                            summaryText = $"{emulator.Name}: 릴리즈 조회 실패";
+                            var isRyujinxApp = !string.IsNullOrWhiteSpace(emulator.Repository) && emulator.Repository.Contains("git.ryujinx.app", StringComparison.OrdinalIgnoreCase);
+                            summaryText = isRyujinxApp
+                                ? $"{emulator.Name}: 릴리즈 조회 실패 (git.ryujinx.app 서버 오프라인/점검 중)"
+                                : $"{emulator.Name}: 릴리즈 조회 실패";
                         }
                         else
                         {
@@ -1291,7 +1301,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 var release = await _releaseService.GetLatestReleaseAsync(emulator.Repository, emulator.AssetPattern, CancellationToken.None);
                 if (release == null)
                 {
-                    summary.Add($"{emulator.Name}: 릴리즈 조회 실패");
+                    var isRyujinxApp = !string.IsNullOrWhiteSpace(emulator.Repository) && emulator.Repository.Contains("git.ryujinx.app", StringComparison.OrdinalIgnoreCase);
+                    summary.Add(isRyujinxApp
+                        ? $"{emulator.Name}: 릴리즈 조회 실패 (git.ryujinx.app 서버 오프라인/점검 중)"
+                        : $"{emulator.Name}: 릴리즈 조회 실패");
                     continue;
                 }
 
