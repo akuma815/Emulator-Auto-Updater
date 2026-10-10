@@ -1906,7 +1906,13 @@ public sealed class GitHubReleaseService
         Unknown
     }
 
-    private sealed record RepositoryInfo(RepositoryProvider Provider, string Host, string Owner, string Repo, string ApiBaseUrl);
+    private sealed record RepositoryInfo(
+        RepositoryProvider Provider,
+        string Host,
+        string Owner,
+        string Repo,
+        string ApiBaseUrl,
+        string? TargetTag = null);
 
     private static RepositoryInfo? ParseRepositoryInfo(string repository)
     {
@@ -1923,12 +1929,29 @@ public sealed class GitHubReleaseService
             {
                 if (segments.Length >= 4 && string.Equals(segments[0], "repos", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new RepositoryInfo(RepositoryProvider.GitHub, uri.Host, segments[1], segments[2], "https://api.github.com");
+                    string? targetTag = null;
+                    if (segments.Length >= 6 && string.Equals(segments[3], "releases", StringComparison.OrdinalIgnoreCase) &&
+                        (string.Equals(segments[4], "tags", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[4], "tag", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        targetTag = Uri.UnescapeDataString(segments[5]);
+                    }
+                    return new RepositoryInfo(RepositoryProvider.GitHub, uri.Host, segments[1], segments[2], "https://api.github.com", targetTag);
                 }
 
                 if (segments.Length >= 2)
                 {
-                    return new RepositoryInfo(RepositoryProvider.GitHub, uri.Host, segments[0], segments[1], "https://api.github.com");
+                    string? targetTag = null;
+                    if (segments.Length >= 5 && string.Equals(segments[2], "releases", StringComparison.OrdinalIgnoreCase) &&
+                        (string.Equals(segments[3], "tag", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[3], "tags", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        targetTag = Uri.UnescapeDataString(segments[4]);
+                    }
+                    else if (segments.Length >= 4 &&
+                        (string.Equals(segments[2], "tag", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[2], "tags", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        targetTag = Uri.UnescapeDataString(segments[3]);
+                    }
+                    return new RepositoryInfo(RepositoryProvider.GitHub, uri.Host, segments[0], segments[1], "https://api.github.com", targetTag);
                 }
 
                 return null;
@@ -1938,12 +1961,29 @@ public sealed class GitHubReleaseService
                 string.Equals(segments[1], "v1", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(segments[2], "repos", StringComparison.OrdinalIgnoreCase))
             {
-                return new RepositoryInfo(RepositoryProvider.Gitea, uri.Host, segments[3], segments[4], $"{uri.Scheme}://{uri.Host}/api/v1");
+                string? targetTag = null;
+                if (segments.Length >= 8 && string.Equals(segments[5], "releases", StringComparison.OrdinalIgnoreCase) &&
+                    (string.Equals(segments[6], "tags", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[6], "tag", StringComparison.OrdinalIgnoreCase)))
+                {
+                    targetTag = Uri.UnescapeDataString(segments[7]);
+                }
+                return new RepositoryInfo(RepositoryProvider.Gitea, uri.Host, segments[3], segments[4], $"{uri.Scheme}://{uri.Host}/api/v1", targetTag);
             }
 
             if (segments.Length >= 2)
             {
-                return new RepositoryInfo(RepositoryProvider.Gitea, uri.Host, segments[0], segments[1], $"{uri.Scheme}://{uri.Host}/api/v1");
+                string? targetTag = null;
+                if (segments.Length >= 5 && string.Equals(segments[2], "releases", StringComparison.OrdinalIgnoreCase) &&
+                    (string.Equals(segments[3], "tag", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[3], "tags", StringComparison.OrdinalIgnoreCase)))
+                {
+                    targetTag = Uri.UnescapeDataString(segments[4]);
+                }
+                else if (segments.Length >= 4 &&
+                    (string.Equals(segments[2], "tag", StringComparison.OrdinalIgnoreCase) || string.Equals(segments[2], "tags", StringComparison.OrdinalIgnoreCase)))
+                {
+                    targetTag = Uri.UnescapeDataString(segments[3]);
+                }
+                return new RepositoryInfo(RepositoryProvider.Gitea, uri.Host, segments[0], segments[1], $"{uri.Scheme}://{uri.Host}/api/v1", targetTag);
             }
 
             return null;
@@ -1964,8 +2004,193 @@ public sealed class GitHubReleaseService
                string.Equals(host, "api.github.com", StringComparison.OrdinalIgnoreCase);
     }
 
+    public static DateTimeOffset? ExtractDateFromText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        // Matches e.g. 2026-09-23, 2026.09.23, 2026/09/23, 2026_09_23
+        var match = Regex.Match(text, @"\b(?<year>20\d\d)[-_/.](?<month>0?[1-9]|1[0-2])[-_/.](?<day>0?[1-9]|[12]\d|3[01])\b");
+        if (match.Success &&
+            int.TryParse(match.Groups["year"].Value, out var year) &&
+            int.TryParse(match.Groups["month"].Value, out var month) &&
+            int.TryParse(match.Groups["day"].Value, out var day))
+        {
+            try
+            {
+                return new DateTimeOffset(year, month, day, 0, 0, 0, TimeSpan.Zero);
+            }
+            catch { }
+        }
+
+        // Matches e.g. 20260923
+        var compactMatch = Regex.Match(text, @"\b(?<year>20\d\d)(?<month>0[1-9]|1[0-2])(?<day>0[1-9]|[12]\d|3[01])\b");
+        if (compactMatch.Success &&
+            int.TryParse(compactMatch.Groups["year"].Value, out var cYear) &&
+            int.TryParse(compactMatch.Groups["month"].Value, out var cMonth) &&
+            int.TryParse(compactMatch.Groups["day"].Value, out var cDay))
+        {
+            try
+            {
+                return new DateTimeOffset(cYear, cMonth, cDay, 0, 0, 0, TimeSpan.Zero);
+            }
+            catch { }
+        }
+
+        return null;
+    }
+
+    private static DateTimeOffset GetEffectiveReleaseDate(GitHubReleaseResponse response)
+    {
+        var dates = new List<DateTimeOffset>();
+        if (response.PublishedAt > DateTimeOffset.MinValue)
+        {
+            dates.Add(response.PublishedAt);
+        }
+        if (response.CreatedAt.HasValue && response.CreatedAt.Value > DateTimeOffset.MinValue)
+        {
+            dates.Add(response.CreatedAt.Value);
+        }
+        if (response.Assets != null)
+        {
+            foreach (var a in response.Assets)
+            {
+                if (a.UpdatedAt.HasValue && a.UpdatedAt.Value > DateTimeOffset.MinValue)
+                {
+                    dates.Add(a.UpdatedAt.Value);
+                }
+                if (a.CreatedAt.HasValue && a.CreatedAt.Value > DateTimeOffset.MinValue)
+                {
+                    dates.Add(a.CreatedAt.Value);
+                }
+            }
+        }
+        var titleDate = ExtractDateFromText(response.Name) ?? ExtractDateFromText(response.TagName);
+        if (titleDate.HasValue)
+        {
+            dates.Add(titleDate.Value);
+        }
+
+        return dates.Count > 0 ? dates.Max() : DateTimeOffset.MinValue;
+    }
+
+    private static string? ExtractReleaseTitleFromHtml(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return null;
+        }
+
+        var h1Match = Regex.Match(html, @"<h1[^>]*>(?<title>[^<]+)</h1>", RegexOptions.IgnoreCase);
+        if (h1Match.Success)
+        {
+            var title = WebUtility.HtmlDecode(h1Match.Groups["title"].Value).Trim();
+            if (!string.IsNullOrWhiteSpace(title) && !title.Contains("Choose a tag", StringComparison.OrdinalIgnoreCase))
+            {
+                return title;
+            }
+        }
+
+        var titleMatch = Regex.Match(html, @"<title>Release\s+(?<title>[^·<|]+)", RegexOptions.IgnoreCase);
+        if (titleMatch.Success)
+        {
+            var title = WebUtility.HtmlDecode(titleMatch.Groups["title"].Value).Trim();
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+        }
+
+        return null;
+    }
+
+    private static DateTimeOffset ParseHtmlEffectiveDate(string html, string? tagName = null)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return DateTimeOffset.MinValue;
+        }
+
+        var dates = new List<DateTimeOffset>();
+
+        var matches = Regex.Matches(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
+        foreach (Match m in matches)
+        {
+            if (DateTimeOffset.TryParse(m.Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dto))
+            {
+                dates.Add(dto);
+            }
+        }
+
+        var title = ExtractReleaseTitleFromHtml(html);
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            var d = ExtractDateFromText(title);
+            if (d.HasValue) dates.Add(d.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(tagName))
+        {
+            var d = ExtractDateFromText(tagName);
+            if (d.HasValue) dates.Add(d.Value);
+        }
+
+        return dates.Count > 0 ? dates.Max() : DateTimeOffset.MinValue;
+    }
+
+    private static DateTimeOffset ParseHtmlPublishedDate(string html) => ParseHtmlEffectiveDate(html);
+
     private async Task<GitHubRelease?> GetLatestGitHubReleaseAsync(RepositoryInfo info, string? assetPattern, CancellationToken cancellationToken)
     {
+        // 0. If user specifically configured a TargetTag, fetch THAT exact release tag first!
+        if (!string.IsNullOrWhiteSpace(info.TargetTag))
+        {
+            try
+            {
+                var tagUrl = $"{info.ApiBaseUrl}/repos/{info.Owner}/{info.Repo}/releases/tags/{Uri.EscapeDataString(info.TargetTag)}";
+                using var tagRequest = new HttpRequestMessage(HttpMethod.Get, tagUrl);
+                tagRequest.Headers.UserAgent.ParseAdd("EmulatorAutoUpdater/1.0");
+                tagRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+                using var tagResponse = await HttpClient.SendAsync(tagRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (tagResponse.IsSuccessStatusCode)
+                {
+                    await using var stream = await tagResponse.Content.ReadAsStreamAsync(cancellationToken);
+                    var apiRelease = await JsonSerializer.DeserializeAsync<GitHubReleaseResponse>(stream, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }, cancellationToken);
+
+                    if (apiRelease != null)
+                    {
+                        var effectiveDate = GetEffectiveReleaseDate(apiRelease);
+                        return new GitHubRelease
+                        {
+                            TagName = apiRelease.TagName ?? apiRelease.Name,
+                            Name = apiRelease.Name,
+                            Body = apiRelease.Body ?? string.Empty,
+                            PublishedAt = effectiveDate,
+                            FetchSource = "GitHub REST API (Target Tag)",
+                            Assets = apiRelease.Assets?.Select(asset => new GitHubAsset
+                            {
+                                Name = asset.Name,
+                                BrowserDownloadUrl = asset.BrowserDownloadUrl
+                            }).ToList() ?? new List<GitHubAsset>()
+                        };
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+            }
+        }
+
         var candidates = new List<GitHubReleaseResponse>();
 
         // 1. Query /repos/{owner}/{repo}/releases list (Includes Prereleases / Nightly Builds like PCSX2 v2.7.x)
@@ -1997,6 +2222,29 @@ public sealed class GitHubReleaseService
         catch
         {
             // Fallback to HTML scraper
+        }
+
+        // If target tag was specified and found in candidates, select it directly
+        if (!string.IsNullOrWhiteSpace(info.TargetTag))
+        {
+            var matchedTagRelease = candidates.FirstOrDefault(c => string.Equals(c.TagName, info.TargetTag, StringComparison.OrdinalIgnoreCase));
+            if (matchedTagRelease != null)
+            {
+                var effectiveDate = GetEffectiveReleaseDate(matchedTagRelease);
+                return new GitHubRelease
+                {
+                    TagName = matchedTagRelease.TagName ?? matchedTagRelease.Name,
+                    Name = matchedTagRelease.Name,
+                    Body = matchedTagRelease.Body ?? string.Empty,
+                    PublishedAt = effectiveDate,
+                    FetchSource = "GitHub REST API (Target Tag)",
+                    Assets = matchedTagRelease.Assets?.Select(asset => new GitHubAsset
+                    {
+                        Name = asset.Name,
+                        BrowserDownloadUrl = asset.BrowserDownloadUrl
+                    }).ToList() ?? new List<GitHubAsset>()
+                };
+            }
         }
 
         // 2. Query /repos/{owner}/{repo}/releases/latest (Official Latest Stable Release) as additional candidate
@@ -2032,7 +2280,7 @@ public sealed class GitHubReleaseService
             }
         }
 
-        // 3. Filter candidates by assetPattern (if specified) and select the release with the LATEST PublishedAt date!
+        // 3. Filter candidates by assetPattern (if specified) and select the release with the LATEST Effective Date!
         if (candidates.Count > 0)
         {
             Regex? regex = null;
@@ -2050,21 +2298,22 @@ public sealed class GitHubReleaseService
             {
                 bestRelease = candidates
                     .Where(r => r.Assets != null && r.Assets.Any(a => regex.IsMatch(a.Name)))
-                    .OrderByDescending(r => r.PublishedAt)
+                    .OrderByDescending(GetEffectiveReleaseDate)
                     .FirstOrDefault();
             }
 
             bestRelease ??= candidates
                 .Where(r => r.Assets != null && r.Assets.Count > 0)
-                .OrderByDescending(r => r.PublishedAt)
-                .FirstOrDefault() ?? candidates.OrderByDescending(r => r.PublishedAt).First();
+                .OrderByDescending(GetEffectiveReleaseDate)
+                .FirstOrDefault() ?? candidates.OrderByDescending(GetEffectiveReleaseDate).First();
 
+            var effectiveDate = GetEffectiveReleaseDate(bestRelease);
             return new GitHubRelease
             {
                 TagName = bestRelease.TagName ?? bestRelease.Name,
                 Name = bestRelease.Name,
                 Body = bestRelease.Body ?? string.Empty,
-                PublishedAt = bestRelease.PublishedAt,
+                PublishedAt = effectiveDate,
                 FetchSource = "GitHub REST API",
                 Assets = bestRelease.Assets?.Select(asset => new GitHubAsset
                 {
@@ -2084,6 +2333,42 @@ public sealed class GitHubReleaseService
         if (!string.IsNullOrWhiteSpace(assetPattern))
         {
             try { patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase); } catch { }
+        }
+
+        // 0. If user specifically configured a TargetTag, fetch THAT exact release tag page first!
+        if (!string.IsNullOrWhiteSpace(info.TargetTag))
+        {
+            try
+            {
+                var targetTagUrl = $"https://github.com/{info.Owner}/{info.Repo}/releases/tag/{Uri.EscapeDataString(info.TargetTag)}";
+                using var tagRequest = new HttpRequestMessage(HttpMethod.Get, targetTagUrl);
+                tagRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+                tagRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+                using var tagResponse = await HttpClient.SendAsync(tagRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (tagResponse.IsSuccessStatusCode)
+                {
+                    var html = await tagResponse.Content.ReadAsStringAsync(cancellationToken);
+                    var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, info.TargetTag, html, cancellationToken);
+                    var parsedDate = ParseHtmlEffectiveDate(html, info.TargetTag);
+                    return new GitHubRelease
+                    {
+                        TagName = info.TargetTag,
+                        Name = ExtractReleaseTitleFromHtml(html) ?? $"Release {info.TargetTag}",
+                        Body = $"GitHub Release {info.TargetTag} (Web Parsing - Target Tag).",
+                        PublishedAt = parsedDate > DateTimeOffset.MinValue ? parsedDate.ToLocalTime() : DateTimeOffset.MinValue,
+                        FetchSource = "Web (Target Tag)",
+                        Assets = assets
+                    };
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+            }
         }
 
         var candidates = new List<GitHubRelease>();
@@ -2118,11 +2403,11 @@ public sealed class GitHubReleaseService
                 if (!string.IsNullOrWhiteSpace(tagName) && seenTags.Add(tagName))
                 {
                     var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
-                    var parsedDate = ParseHtmlPublishedDate(html);
+                    var parsedDate = ParseHtmlEffectiveDate(html, tagName);
                     candidates.Add(new GitHubRelease
                     {
                         TagName = tagName,
-                        Name = $"Release {tagName}",
+                        Name = ExtractReleaseTitleFromHtml(html) ?? $"Release {tagName}",
                         Body = $"GitHub Release {tagName} (Web Parsing - Latest Redirect).",
                         PublishedAt = parsedDate > DateTimeOffset.MinValue ? parsedDate.ToLocalTime() : DateTimeOffset.MinValue,
                         FetchSource = "Web (Latest Redirect)",
@@ -2153,6 +2438,20 @@ public sealed class GitHubReleaseService
                 var html = await response.Content.ReadAsStringAsync(cancellationToken);
                 var tagMatches = Regex.Matches(html, $@"{info.Owner}/{info.Repo}/releases/tag/(?<tag>[^""'/\s?#]+)", RegexOptions.IgnoreCase);
                 var timeMatches = Regex.Matches(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
+
+                var titleRegex = new Regex(
+                    $@"{Regex.Escape(info.Owner)}/{Regex.Escape(info.Repo)}/releases/tag/(?<tag>[^""'/\s?#]+)[^>]*>(?<title>[^<]+)</a>",
+                    RegexOptions.IgnoreCase);
+                var titleMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (Match m in titleRegex.Matches(html))
+                {
+                    var tag = WebUtility.HtmlDecode(m.Groups["tag"].Value);
+                    var title = WebUtility.HtmlDecode(m.Groups["title"].Value).Trim();
+                    if (!titleMap.ContainsKey(tag) && !string.IsNullOrWhiteSpace(title))
+                    {
+                        titleMap[tag] = title;
+                    }
+                }
 
                 var orderedTags = new List<string>();
                 foreach (Match m in tagMatches)
@@ -2186,12 +2485,19 @@ public sealed class GitHubReleaseService
                     }
 
                     var releaseDate = i < releaseDates.Count ? releaseDates[i] : DateTimeOffset.MinValue;
+                    var title = titleMap.TryGetValue(tagName, out var t) ? t : $"Release {tagName}";
+                    var titleDate = ExtractDateFromText(title) ?? ExtractDateFromText(tagName);
+                    if (titleDate.HasValue && titleDate.Value > releaseDate)
+                    {
+                        releaseDate = titleDate.Value;
+                    }
+
                     var assets = await FetchExpandedAssetsForTagAsync(info.Owner, info.Repo, tagName, html, cancellationToken);
 
                     candidates.Add(new GitHubRelease
                     {
                         TagName = tagName,
-                        Name = $"Release {tagName}",
+                        Name = title,
                         Body = $"GitHub Release {tagName} (Web Parsing - Release Page).",
                         PublishedAt = releaseDate > DateTimeOffset.MinValue ? releaseDate.ToLocalTime() : DateTimeOffset.MinValue,
                         FetchSource = "Web (Release Page)",
@@ -2213,6 +2519,16 @@ public sealed class GitHubReleaseService
             return null;
         }
 
+        // If target tag was specified, pick that one!
+        if (!string.IsNullOrWhiteSpace(info.TargetTag))
+        {
+            var targetCandidate = candidates.FirstOrDefault(c => string.Equals(c.TagName, info.TargetTag, StringComparison.OrdinalIgnoreCase));
+            if (targetCandidate != null)
+            {
+                return targetCandidate;
+            }
+        }
+
         // Filter and choose best candidate
         IEnumerable<GitHubRelease> filtered = candidates;
         if (patternRegex != null)
@@ -2229,22 +2545,6 @@ public sealed class GitHubReleaseService
             .FirstOrDefault();
 
         return best ?? candidates[0];
-    }
-
-    private static DateTimeOffset ParseHtmlPublishedDate(string html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            return DateTimeOffset.MinValue;
-        }
-
-        var match = Regex.Match(html, @"<(relative-time|time)[^>]+datetime=[""'](?<date>[^""']+)[""']", RegexOptions.IgnoreCase);
-        if (match.Success && DateTimeOffset.TryParse(match.Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dto))
-        {
-            return dto;
-        }
-
-        return DateTimeOffset.MinValue;
     }
 
     private async Task<List<GitHubAsset>> FetchExpandedAssetsForTagAsync(string owner, string repo, string tagName, string htmlPage, CancellationToken cancellationToken)
@@ -2553,6 +2853,15 @@ public sealed class GitHubReleaseService
             return null;
         }
 
+        if (!string.IsNullOrWhiteSpace(info.TargetTag))
+        {
+            var matchedTag = candidateReleases.FirstOrDefault(r => string.Equals(r.TagName, info.TargetTag, StringComparison.OrdinalIgnoreCase));
+            if (matchedTag != null)
+            {
+                return matchedTag;
+            }
+        }
+
         var orderedCandidates = candidateReleases.OrderByDescending(r => r.PublishedAt).ToList();
 
         // 3. Filter candidate releases by assetPattern if provided
@@ -2598,6 +2907,18 @@ public sealed class GitHubReleaseService
                 ? DateTimeOffset.Parse(createdAtProp.GetString()!)
                 : DateTimeOffset.MinValue);
 
+        var effectiveDate = publishedAt;
+        if (root.TryGetProperty("created_at", out var cProp) && cProp.ValueKind == JsonValueKind.String &&
+            DateTimeOffset.TryParse(cProp.GetString(), out var cDate) && cDate > effectiveDate)
+        {
+            effectiveDate = cDate;
+        }
+        var titleDate = ExtractDateFromText(name) ?? ExtractDateFromText(tagName);
+        if (titleDate.HasValue && titleDate.Value > effectiveDate)
+        {
+            effectiveDate = titleDate.Value;
+        }
+
         var assets = new List<GitHubAsset>();
         if (root.TryGetProperty("assets", out var assetsElement) && assetsElement.ValueKind == JsonValueKind.Array)
         {
@@ -2638,7 +2959,7 @@ public sealed class GitHubReleaseService
             TagName = tagName,
             Name = name,
             Body = body,
-            PublishedAt = publishedAt,
+            PublishedAt = effectiveDate,
             FetchSource = "Gitea API",
             Assets = assets
         };
@@ -2726,12 +3047,15 @@ public sealed class GitHubReleaseService
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("body")] string? Body,
         [property: JsonPropertyName("published_at")] DateTimeOffset PublishedAt,
+        [property: JsonPropertyName("created_at")] DateTimeOffset? CreatedAt,
         [property: JsonPropertyName("assets")] List<GitHubAssetResponse> Assets
     );
 
     private sealed record GitHubAssetResponse(
         [property: JsonPropertyName("name")] string Name,
-        [property: JsonPropertyName("browser_download_url")] string BrowserDownloadUrl
+        [property: JsonPropertyName("browser_download_url")] string BrowserDownloadUrl,
+        [property: JsonPropertyName("created_at")] DateTimeOffset? CreatedAt,
+        [property: JsonPropertyName("updated_at")] DateTimeOffset? UpdatedAt
     );
 
     public sealed class GitHubRelease

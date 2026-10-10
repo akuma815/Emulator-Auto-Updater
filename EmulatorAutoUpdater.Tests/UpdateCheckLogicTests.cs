@@ -208,4 +208,48 @@ public class UpdateCheckLogicTests
         Assert.NotEmpty(foundAssets);
         Assert.False(string.IsNullOrWhiteSpace(foundAssets[0].Version));
     }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_AresNightlyTag_ReturnsNightlyReleaseWithLatestDate()
+    {
+        var service = new GitHubReleaseService();
+        var url = "https://github.com/ares-emulator/ares/releases/tag/nightly";
+        var assetPattern = @"(?i)ares.*win.*x64.*\.zip$";
+
+        var release = await service.GetLatestReleaseAsync(url, assetPattern, System.Threading.CancellationToken.None);
+        Assert.NotNull(release);
+        Assert.Equal("nightly", release.TagName, ignoreCase: true);
+        Assert.NotEmpty(release.Assets);
+        Assert.Contains(release.Assets, a => a.Name.Contains("windows-x64", StringComparison.OrdinalIgnoreCase) && a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+
+        // Effective published date must be on or after Sep 2026, NOT 2024!
+        Assert.True(release.PublishedAt >= new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero),
+            $"Expected published date in Sep 2026 or later, but got {release.PublishedAt}");
+
+        var foundAssets = service.FindAssets(release, assetPattern);
+        Assert.NotEmpty(foundAssets);
+        Assert.False(string.IsNullOrWhiteSpace(foundAssets[0].Version));
+        // The version should NOT be v148! It should be date-based starting with 2026-
+        Assert.DoesNotContain("v148", foundAssets[0].Version, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("148", foundAssets[0].Version);
+        Assert.StartsWith("2026-", foundAssets[0].Version);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task GetLatestReleaseAsync_AresReleasesUrl_ReturnsNightlyBecauseEffectiveDateIsNewerThanV148()
+    {
+        var service = new GitHubReleaseService();
+        var url = "https://github.com/ares-emulator/ares/releases";
+        var assetPattern = @"(?i)(?!.*PDBs)ares.*(win|windows).*x64.*\.zip$";
+
+        var release = await service.GetLatestReleaseAsync(url, assetPattern, System.Threading.CancellationToken.None);
+        Assert.NotNull(release);
+        Assert.Equal("nightly", release.TagName, ignoreCase: true);
+        Assert.NotEmpty(release.Assets);
+
+        var foundAssets = service.FindAssets(release, assetPattern);
+        Assert.NotEmpty(foundAssets);
+        Assert.DoesNotContain("v148", foundAssets[0].Version, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("2026-", foundAssets[0].Version);
+    }
 }
