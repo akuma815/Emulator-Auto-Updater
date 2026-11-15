@@ -12,7 +12,7 @@
 - **8분할 고속 병렬 다운로드 엔진**: 5MB 이상의 대용량 아티팩트/빌드 파일(BizHawk, Dolphin, Ryujinx 등)을 8개 커넥션으로 분할 다운로드하여 8~10배 초고속 수신 (6.8 MB/s ~ 10 MB/s 이상).
 - **스마트 Asset Pattern 자동 변환기**: 예시 파일명만 적고 `[패턴 자동 변환]`을 누르면 최적의 정규식 패턴으로 자동 전환.
 - **독립 포터블 설정 파일(config.json) 지원**: 실행 폴더 내 `config.json` 우선 로드, 설정 불러오기/저장/다른 이름으로 저장 지원.
-- **다양한 저장소 및 봇 우회 지원**: GitHub, Gitea, Dolphin 공식, PPSSPP devbuilds, melonDS, Flycast, BizHawk 등 자동 지원.
+- **다양한 저장소 및 봇 우회 지원**: GitHub, Gitea, Dolphin 공식, PPSSPP devbuilds, melonDS, openMSX nightly, Flycast, BizHawk 등 자동 지원.
 
 ---
 

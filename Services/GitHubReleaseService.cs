@@ -50,6 +50,11 @@ public sealed class GitHubReleaseService
             return await GetLatestMelonDsNightlyReleaseAsync(repository, cancellationToken);
         }
 
+        if (IsOpenMsxNightlyUrl(repository))
+        {
+            return await GetLatestOpenMsxNightlyReleaseAsync(repository, assetPattern, cancellationToken);
+        }
+
         if (IsDolphinDownloadPageUrl(repository))
         {
             return await GetLatestDolphinDevelopmentReleaseAsync(repository, cancellationToken);
@@ -188,6 +193,198 @@ public sealed class GitHubReleaseService
             out var publishedAt)
             ? publishedAt
             : DateTimeOffset.MinValue;
+    }
+
+    public static bool IsOpenMsxNightlyUrl(string repository)
+    {
+        if (string.IsNullOrWhiteSpace(repository) ||
+            !Uri.TryCreate(repository.Trim(), UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return string.Equals(uri.Host, "openmsx.vampier.net", StringComparison.OrdinalIgnoreCase)
+               && !uri.AbsolutePath.StartsWith("/downloads/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<GitHubRelease?> GetLatestOpenMsxNightlyReleaseAsync(
+        string repositoryUrl,
+        string? assetPattern,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, repositoryUrl.Trim());
+        request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) EmulatorAutoUpdater/1.0");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+        using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
+        return ParseOpenMsxNightlyPage(html, repositoryUrl.Trim(), assetPattern);
+    }
+
+    /// <summary>
+    /// Parses the openMSX nightly download table (https://openmsx.vampier.net/).
+    /// Each table row is one build (newest first) with optional Windows MSI / Windows Bin / macOS assets.
+    /// Picks the newest build that actually has a matching file (some builds lack Windows artifacts)
+    /// and lists all recent builds in the release notes.
+    /// </summary>
+    public static GitHubRelease? ParseOpenMsxNightlyPage(string html, string pageUrl, string? assetPattern)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return null;
+        }
+
+        var baseUri = Uri.TryCreate(pageUrl, UriKind.Absolute, out var parsedBase)
+            ? parsedBase
+            : new Uri("https://openmsx.vampier.net/");
+
+        var builds = new List<OpenMsxBuild>();
+        var rowMatches = Regex.Matches(html, @"<tr\b[^>]*>(?<row>.*?)</tr>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        foreach (Match rowMatch in rowMatches)
+        {
+            var row = rowMatch.Groups["row"].Value;
+            var nameMatch = Regex.Match(
+                row,
+                @"<td\s+class=[""']filename[""'][^>]*>\s*(?<name>[^<\s]+)",
+                RegexOptions.IgnoreCase);
+            if (!nameMatch.Success)
+            {
+                continue;
+            }
+
+            var build = new OpenMsxBuild(WebUtility.HtmlDecode(nameMatch.Groups["name"].Value).Trim());
+
+            foreach (Match link in Regex.Matches(row, @"<a\s+[^>]*href=[""'](?<href>[^""']+)[""']", RegexOptions.IgnoreCase))
+            {
+                var href = WebUtility.HtmlDecode(link.Groups["href"].Value).Trim();
+                if (!Uri.TryCreate(baseUri, href, out var absolute))
+                {
+                    continue;
+                }
+
+                if (Regex.IsMatch(absolute.AbsolutePath, @"\.(zip|7z|msi|exe|dmg|tar\.gz|tgz)$", RegexOptions.IgnoreCase))
+                {
+                    var fileName = Uri.UnescapeDataString(Path.GetFileName(absolute.AbsolutePath));
+                    if (build.Assets.All(a => !string.Equals(a.Name, fileName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        build.Assets.Add(new GitHubAsset { Name = fileName, BrowserDownloadUrl = absolute.ToString() });
+                    }
+                }
+                else if (absolute.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    build.LogUrl = absolute.ToString();
+                }
+            }
+
+            builds.Add(build);
+        }
+
+        if (builds.Count == 0)
+        {
+            return null;
+        }
+
+        Regex? patternRegex = null;
+        if (!string.IsNullOrWhiteSpace(assetPattern))
+        {
+            try
+            {
+                patternRegex = new Regex(assetPattern, RegexOptions.IgnoreCase);
+            }
+            catch (ArgumentException)
+            {
+                patternRegex = null;
+            }
+        }
+
+        var selected = patternRegex != null
+            ? builds.FirstOrDefault(b => b.Assets.Any(a => patternRegex.IsMatch(a.Name)))
+            : builds.FirstOrDefault(b => b.HasWindowsAsset);
+        selected ??= builds.FirstOrDefault(b => b.Assets.Count > 0);
+        if (selected == null)
+        {
+            return null;
+        }
+
+        // The footer only carries the timestamp/commit of the newest build.
+        var publishedAt = DateTimeOffset.MinValue;
+        var footerMatch = Regex.Match(
+            html,
+            @"Latest\s+build:\s*(?<date>\d{4}-\d{2}-\d{2}T[0-9:]+Z).*?Commit:\s*(?<commit>[0-9a-f]+)",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        if (footerMatch.Success)
+        {
+            var footerCommit = footerMatch.Groups["commit"].Value;
+            var shortCommit = footerCommit[..Math.Min(9, footerCommit.Length)];
+            var isFooterBuild = ReferenceEquals(selected, builds[0]) ||
+                                (shortCommit.Length >= 7 &&
+                                 selected.Name.EndsWith("-g" + shortCommit, StringComparison.OrdinalIgnoreCase));
+            if (isFooterBuild &&
+                DateTimeOffset.TryParse(footerMatch.Groups["date"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var footerDate))
+            {
+                publishedAt = footerDate;
+            }
+        }
+
+        var version = Regex.Replace(selected.Name, @"^openmsx-", string.Empty, RegexOptions.IgnoreCase);
+
+        var body = new StringBuilder();
+        body.AppendLine($"openMSX nightly build {selected.Name}");
+        if (!string.IsNullOrWhiteSpace(selected.LogUrl))
+        {
+            body.AppendLine($"Build log: {selected.LogUrl}");
+        }
+
+        body.AppendLine();
+        body.AppendLine($"Recent builds ({builds.Count}):");
+        foreach (var build in builds)
+        {
+            var marker = ReferenceEquals(build, selected) ? "▶ " : "   ";
+            var platforms = build.Assets.Count == 0
+                ? "-"
+                : string.Join(", ", build.Assets.Select(a => DescribeOpenMsxAsset(a.Name)));
+            body.AppendLine($"{marker}{build.Name}{(build.HasWindowsAsset ? string.Empty : " (no Windows build)")} — {platforms}");
+        }
+
+        return new GitHubRelease
+        {
+            TagName = version,
+            Name = $"openMSX Nightly {version}",
+            Body = body.ToString().TrimEnd(),
+            PublishedAt = publishedAt,
+            FetchSource = "openMSX Nightly Web",
+            // Portable Windows zip first: update checks use the first matching asset by default.
+            Assets = selected.Assets.OrderBy(a => DescribeOpenMsxAsset(a.Name) switch
+            {
+                "Windows Bin" => 0,
+                "Windows MSI" => 1,
+                _ => 2
+            }).ToList()
+        };
+    }
+
+    private sealed class OpenMsxBuild
+    {
+        public OpenMsxBuild(string name) => Name = name;
+
+        public string Name { get; }
+        public List<GitHubAsset> Assets { get; } = new();
+        public string? LogUrl { get; set; }
+
+        public bool HasWindowsAsset =>
+            Assets.Any(a => a.Name.Contains("windows", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string DescribeOpenMsxAsset(string fileName)
+    {
+        var lower = fileName.ToLowerInvariant();
+        if (lower.Contains("windows") && lower.Contains("msi")) return "Windows MSI";
+        if (lower.Contains("windows")) return "Windows Bin";
+        if (lower.Contains("aarch64") || lower.Contains("arm64")) return "macOS ARM";
+        if (lower.Contains("mac")) return "macOS Intel";
+        return fileName;
     }
 
     private static bool IsFlycastBuildsUrl(string repository)

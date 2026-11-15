@@ -47,6 +47,17 @@
 
 ---
 
+## 🚀 다음 버전 변경 내역 (미출시)
+
+1. **openMSX Nightly 빌드 자동 조회 지원**:
+   - Repository / URL에 `https://openmsx.vampier.net/` 를 입력하면 openMSX nightly 다운로드 페이지(최근 10개 빌드)를 자동으로 분석합니다.
+   - 최신 빌드의 파일(Windows Bin zip, Windows MSI zip, macOS ARM/Intel dmg)이 릴리즈 파일 목록에 표시되며, 기본 다운로드 대상은 포터블 **Windows Bin zip**입니다.
+   - 최신 빌드에 Windows 파일이 없는 경우(macOS만 빌드된 경우) 자동으로 Windows 파일이 있는 가장 최근 빌드를 선택합니다.
+   - 릴리즈 노트 영역에 최근 빌드 목록과 각 빌드의 플랫폼별 제공 여부, GitHub Actions 빌드 로그 링크가 표시됩니다.
+   - MSI 설치본만 받고 싶다면 Asset Pattern에 `(?i)windows.*msi\.zip$` 를 입력하세요.
+
+---
+
 ## 🚀 v1.5.1 새로운 기능 및 변경 내역
 
 1. **`nightly.link` 스마트 폴백 해석 엔진 탑재 (BizHawk, DeSmuME, Mesen 등 지원)**:
@@ -170,6 +181,7 @@
 | **DuckStation** | `https://github.com/stenzek/duckstation/releases/tag/latest` | `(?i)(?!.*sse2)duckstation.*(win\|windows).*x64.*release.*\.zip$` |
 | **Flycast (Dev)** | `https://flyinghead.github.io/flycast-builds/` | *(자동 인식)* |
 | **melonDS (Dev)** | `https://melonds.kuribo64.net/nightlies.php` | *(자동 인식)* |
+| **openMSX (Nightly)** | `https://openmsx.vampier.net/` | *(자동 인식)* 또는 `(?i)windows-vc-x64-bin\.zip$` |
 | **BizHawk (Dev)** | `https://nightly.link/TASEmulators/BizHawk/workflows/ci/master/BizHawk-dev-windows.zip` | *(자동 인식)* |
 | **DeSmuME (Dev)** | `https://nightly.link/TASEmulators/desmume/workflows/build_win/master/desmume-win-x64.zip` | *(자동 인식)* |
 | **Mesen (Dev)** | `https://nightly.link/nesdev-org/MesenCE/workflows/build/master/Mesen%20%28Windows%20-%20net10.0%20-%20AoT%29.zip` | *(자동 인식)* |
